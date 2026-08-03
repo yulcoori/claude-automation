@@ -73,7 +73,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
   height:76px;
 }
 .brand{display:flex;align-items:center;gap:10px}
-.brand-mark{width:34px;height:34px}
+.brand-mark{height:36px;width:auto}
 .brand-text{display:flex;flex-direction:column;line-height:1.15}
 .brand-text .en{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--accent-soft)}
 .brand-text .kr{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.01em}
