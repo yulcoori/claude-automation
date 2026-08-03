@@ -1,10 +1,10 @@
 /* ===== Design tokens ===== */
 :root{
-  --navy-950:#1b1750;
-  --navy-900:#221d5e;
-  --navy-800:#2c2672;
-  --navy-700:#383082;
-  --navy-600:#4a4098;
+  --navy-950:#0a0e26;
+  --navy-900:#0f1330;
+  --navy-800:#151a40;
+  --navy-700:#1d2354;
+  --navy-600:#282f6e;
   --ink:#181341;
   --slate-600:#5c5f7d;
   --slate-500:#7b7ea0;
@@ -14,6 +14,7 @@
   --accent-500:#0ea894;
   --accent-400:#34c2aa;
   --accent-050:#e3faf4;
+  --accent-soft:#8fd0c2;
   --sky-400:#4c7fe0;
   --shadow-sm:0 1px 2px rgba(15,13,50,.06), 0 1px 1px rgba(15,13,50,.04);
   --shadow-md:0 8px 24px rgba(15,13,50,.10);
@@ -74,7 +75,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .brand{display:flex;align-items:center;gap:10px}
 .brand-mark{width:34px;height:34px}
 .brand-text{display:flex;flex-direction:column;line-height:1.15}
-.brand-text .en{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--accent-400)}
+.brand-text .en{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--accent-soft)}
 .brand-text .kr{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.01em}
 
 .nav-desktop{display:flex;align-items:center;gap:2px}
@@ -86,7 +87,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
   transition:background .25s,color .25s;
 }
 .nav-desktop a:hover{background:rgba(255,255,255,.08);color:#fff}
-.nav-desktop a .sub{display:block;font-size:9.5px;letter-spacing:.14em;color:var(--accent-400);font-weight:700;opacity:.9}
+.nav-desktop a .sub{display:block;font-size:9.5px;letter-spacing:.14em;color:var(--accent-soft);font-weight:700;opacity:.9}
 
 .header-cta{display:flex;align-items:center;gap:14px}
 .tel-pill{
@@ -114,7 +115,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
   padding:18px 4px;border-bottom:1px solid rgba(255,255,255,.08);
   color:#fff;font-size:17px;font-weight:600;
 }
-.nav-mobile .sub{font-size:11px;letter-spacing:.14em;color:var(--accent-400);font-weight:700}
+.nav-mobile .sub{font-size:11px;letter-spacing:.14em;color:var(--accent-soft);font-weight:700}
 
 /* ===== Hero ===== */
 .hero{
@@ -147,7 +148,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
   background:rgba(255,255,255,.08);
   border:1px solid rgba(255,255,255,.14);
   font-size:12.5px;font-weight:700;letter-spacing:.08em;
-  color:var(--accent-400);
+  color:var(--accent-soft);
   margin-bottom:26px;
 }
 .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--sky-400);box-shadow:0 0 0 4px rgba(76,127,224,.25)}
@@ -203,20 +204,21 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .hero-card .molecule{width:100%;height:auto;display:block}
 .float-chip{
   position:absolute;
-  background:rgba(44,38,114,.85);
+  background:rgba(21,26,64,.85);
   border:1px solid rgba(255,255,255,.14);
   border-radius:14px;padding:12px 16px;
   display:flex;align-items:center;gap:10px;
   font-size:12.5px;font-weight:700;color:#fff;
   box-shadow:var(--shadow-md);
   backdrop-filter:blur(8px);
-  animation:floaty 6s ease-in-out infinite;
+  animation:floaty 9s ease-in-out infinite;
 }
+@media (prefers-reduced-motion: reduce){.float-chip{animation:none}}
 .float-chip svg{width:16px;height:16px;color:var(--sky-400)}
 .float-chip.c1{top:-18px;left:-22px;animation-delay:0s}
 .float-chip.c2{bottom:14px;right:-26px;animation-delay:1.4s}
 .float-chip.c3{bottom:-22px;left:36px;animation-delay:2.8s}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
 /* ===== Section shell ===== */
 .section{padding:112px 0}
@@ -229,7 +231,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
   color:var(--accent-500);margin-bottom:14px;
 }
 .kicker::before{content:"";width:22px;height:2px;background:var(--accent-500);border-radius:2px}
-.section-navy .kicker{color:var(--accent-400)}
+.section-navy .kicker{color:var(--accent-soft)}
 .section-head{max-width:640px;margin-bottom:56px}
 .section-head.center{margin-left:auto;margin-right:auto;text-align:center}
 .section-head h2{font-size:clamp(26px,3vw,38px);font-weight:800;letter-spacing:-.02em;margin-bottom:14px}
@@ -246,7 +248,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .about-photo .about-illust{width:100%;height:460px;display:block}
 .about-photo::after{
   content:"";position:absolute;inset:0;
-  background:linear-gradient(200deg,transparent 55%,rgba(27,23,80,.65));
+  background:linear-gradient(200deg,transparent 55%,rgba(10,14,38,.65));
 }
 .ceo-tag{
   position:absolute;left:22px;bottom:22px;z-index:1;
@@ -310,7 +312,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .solution-section{
   position:relative;overflow:hidden;
   padding:120px 0;
-  background:radial-gradient(1200px 700px at 50% -20%, #26206a, transparent 60%), var(--navy-950);
+  background:radial-gradient(1200px 700px at 50% -20%, #131740, transparent 60%), var(--navy-950);
   color:#fff;
 }
 .solution-glow{
@@ -319,12 +321,38 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
     radial-gradient(600px 340px at 12% 18%, rgba(14,168,148,.16), transparent 65%),
     radial-gradient(700px 380px at 88% 82%, rgba(76,127,224,.14), transparent 65%);
 }
-.solution-image-wrap{position:relative;z-index:1;display:flex;justify-content:center}
-.solution-image{
-  max-width:560px;width:100%;border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-lg);
-  border:1px solid rgba(255,255,255,.1);
+.hub{position:relative;z-index:1;width:760px;height:760px;max-width:100%;margin:40px auto 0}
+.hub-ring{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:230px;height:230px;border-radius:50%;
+  background:conic-gradient(from 0deg, var(--accent-500), var(--sky-400), var(--accent-400), var(--accent-500));
+  padding:6px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 30px 70px -20px rgba(14,168,148,.4);
 }
+.hub-center{
+  width:100%;height:100%;border-radius:50%;background:var(--navy-950);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px;
+}
+.hub-center strong{font-size:18px;font-weight:800;line-height:1.25;color:#fff;letter-spacing:-.01em}
+
+.hub-node{
+  position:absolute;transform:translate(-50%,-50%);
+  width:230px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
+}
+.hub-node.n1{left:50%;top:calc(50% - 260px)}
+.hub-node.n2{left:calc(50% + 225px);top:calc(50% - 130px)}
+.hub-node.n3{left:calc(50% + 225px);top:calc(50% + 130px)}
+.hub-node.n4{left:50%;top:calc(50% + 260px)}
+.hub-node.n5{left:calc(50% - 225px);top:calc(50% + 130px)}
+.hub-node.n6{left:calc(50% - 225px);top:calc(50% - 130px)}
+.hub-icon{
+  width:42px;height:42px;border-radius:12px;flex:none;
+  background:rgba(14,168,148,.16);color:var(--accent-400);
+  display:grid;place-items:center;
+}
+.hub-icon svg{width:20px;height:20px}
+.hub-node h4{font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:-.01em}
+.hub-node p{font-size:12.5px;color:#aab4d4;line-height:1.55}
 
 /* ===== Partners marquee/grid ===== */
 .partner-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
@@ -338,15 +366,6 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .partner-card .pdesc{font-size:11.5px;color:#93a4bf;margin-top:6px}
 
 /* ===== Products ===== */
-.catalog-figure{margin:0 0 40px}
-.catalog-scroll{
-  overflow-x:auto;border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-lg);border:1px solid var(--line);
-}
-.catalog-scroll img{display:block;width:100%;min-width:720px}
-.catalog-figure figcaption{
-  margin-top:12px;font-size:12.5px;color:var(--slate-500);text-align:center;
-}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:34px}
 .tab-btn{
   padding:9px 18px;border-radius:999px;border:1px solid var(--line);
@@ -570,6 +589,11 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
   .about-grid{grid-template-columns:1fr;gap:44px}
   .about-media{position:static}
   .location-grid{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  .hub{width:auto;height:auto;display:flex;flex-direction:column;align-items:center;gap:28px;margin-top:24px}
+  .hub-ring{position:static;transform:none}
+  .hub-node{position:static;transform:none;width:100%;max-width:440px;flex-direction:row;text-align:left}
 }
 @media (max-width:860px){
   .nav-desktop,.header-cta .tel-pill{display:none}
