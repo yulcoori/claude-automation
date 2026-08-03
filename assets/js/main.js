@@ -61,3 +61,6 @@ window.addEventListener('scroll', () => {
   toTop.classList.toggle('show', window.scrollY > 480);
 });
 toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+const qmTop = document.getElementById('qmTop');
+if (qmTop) qmTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
