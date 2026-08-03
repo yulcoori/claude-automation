@@ -22,18 +22,22 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 revealEls.forEach(el => io.observe(el));
 
-// Product tabs filter
+// Product category tabs (jump + filter)
 const tabs = document.querySelectorAll('#productTabs .tab-btn');
-const cards = document.querySelectorAll('#productGrid .product-card');
+const groups = document.querySelectorAll('#productGrid .product-group');
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
     tabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     const target = tab.dataset.tab;
-    cards.forEach(card => {
-      const match = target === 'all' || card.dataset.tab === target;
-      card.classList.toggle('hidden', !match);
+    groups.forEach(group => {
+      const match = target === 'all' || group.dataset.tab === target;
+      group.classList.toggle('hidden', !match);
     });
+    if (target !== 'all') {
+      const visible = document.querySelector(`.product-group[data-tab="${target}"]`);
+      if (visible) visible.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 });
 
