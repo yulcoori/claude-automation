@@ -68,3 +68,32 @@ toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smoot
 
 const qmTop = document.getElementById('qmTop');
 if (qmTop) qmTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+// Hero stat count-up
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const statEls = document.querySelectorAll('[data-count-to]');
+if (statEls.length) {
+  const statIO = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const target = parseInt(el.dataset.countTo, 10);
+      const suffix = el.dataset.suffix || '';
+      statIO.unobserve(el);
+      if (prefersReducedMotion) {
+        el.textContent = target + suffix;
+        return;
+      }
+      const duration = 1100;
+      const start = performance.now();
+      const tick = (now) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * eased) + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }, { threshold: 0.4 });
+  statEls.forEach(el => statIO.observe(el));
+}
