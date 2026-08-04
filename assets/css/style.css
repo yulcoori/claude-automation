@@ -200,14 +200,8 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
   padding:26px;
   backdrop-filter:blur(6px);
 }
-.hero-card-inner{border-radius:14px;overflow:hidden}
-.hero-photo{width:100%;height:100%;min-height:340px;object-fit:cover;display:block}
-.hero-card-inner-signage{
-  min-height:340px;background:radial-gradient(120% 100% at 50% 40%, var(--navy-800), var(--navy-950));
-  display:flex;align-items:center;justify-content:center;
-}
-.hero-photo-signage{width:auto;max-width:88%;height:auto;min-height:0;object-fit:contain}
-
+.hero-card-inner{border-radius:14px;overflow:hidden;background:#bcb9b2;display:flex;align-items:center;justify-content:center;min-height:340px}
+.hero-photo{width:100%;height:auto;object-fit:contain;display:block}
 .float-chip{
   position:absolute;
   background:rgba(21,26,64,.85);
