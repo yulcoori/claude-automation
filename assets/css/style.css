@@ -202,6 +202,15 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 }
 .hero-card-inner{border-radius:14px;overflow:hidden}
 .hero-photo{width:100%;height:100%;min-height:340px;object-fit:cover;display:block}
+
+/* ===== Brand signage strip ===== */
+.signage-strip{
+  background:var(--navy-950);
+  padding:36px 24px;
+  display:flex;justify-content:center;
+}
+.signage-strip img{max-width:640px;width:100%;height:auto}
+@media (max-width:640px){.signage-strip{padding:28px 20px}}
 .float-chip{
   position:absolute;
   background:rgba(21,26,64,.85);
@@ -275,6 +284,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .card-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
 .card-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 .feature-card{
+  display:block;
   background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-md);
   padding:28px 24px;transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s;
 }
@@ -484,14 +494,30 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 /* ===== Location ===== */
 .location-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
 .location-map{
-  position:relative;min-height:420px;
-  background:linear-gradient(135deg,#dfe8f2,#eef2f7);
+  position:relative;
+  background:#eef1f9;
 }
-.location-map svg{position:absolute;inset:0;width:100%;height:100%}
+.location-map svg{display:block;width:100%;height:auto}
 .location-pin{
-  position:absolute;left:50%;top:48%;transform:translate(-50%,-100%);
+  position:absolute;left:50%;top:52%;transform:translate(-50%,-100%);
   display:flex;flex-direction:column;align-items:center;
 }
+.pin-callout{
+  position:relative;margin-bottom:14px;
+  background:var(--navy-950);color:#fff;border-radius:12px;
+  padding:10px 16px 11px;box-shadow:var(--shadow-lg);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  white-space:nowrap;
+}
+.pin-callout svg{margin-bottom:2px}
+.pin-callout b{font-size:13px;font-weight:800;letter-spacing:-.01em}
+.pin-callout span{font-size:11px;color:#aab4d4}
+.pin-callout::after{
+  content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);
+  border-left:7px solid transparent;border-right:7px solid transparent;
+  border-top:7px solid var(--navy-950);
+}
+.pin-anchor{position:relative;width:20px;height:20px}
 .location-pin .pin-dot{
   width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
   background:var(--accent-500);box-shadow:0 8px 20px rgba(14,168,148,.5);
