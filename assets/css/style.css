@@ -435,6 +435,11 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .brand-card h4 span{font-size:12px;font-weight:600;color:var(--slate-500);margin-left:6px}
 .brand-card p{font-size:13px;color:var(--slate-600);line-height:1.55}
 
+.brand-note{
+  margin-top:22px;font-size:13px;color:var(--slate-600);text-align:center;
+}
+.brand-note a{color:var(--accent-500);font-weight:700}
+.brand-note a:hover{text-decoration:underline}
 .brand-cats{
   margin-top:32px;padding:24px 26px;border-radius:var(--radius-md);
   background:linear-gradient(96deg,var(--navy-950),var(--navy-800));color:#fff;
