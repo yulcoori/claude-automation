@@ -391,6 +391,8 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 }
 .tab-btn:hover{border-color:var(--accent-400);color:var(--accent-500)}
 .tab-btn.active{background:var(--navy-950);border-color:var(--navy-950);color:#fff}
+a.tab-btn{display:inline-block;text-decoration:none}
+a.tab-btn.active:hover{color:#fff;border-color:var(--navy-950)}
 
 .product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .product-card{
