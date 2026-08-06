@@ -17,6 +17,7 @@ from pathlib import Path
 
 from .audit import audit
 from .config import MissingCredentials, Settings
+from .context import PostContext
 from .draft import DraftResult, generate_draft
 from .images import ImageReport, process_images
 from .naver import OpenApiClient, SearchAdClient
@@ -202,8 +203,28 @@ def cmd_build(args: argparse.Namespace) -> int:
     else:
         print(f"\n[2/4] 사진 없음 — `-i ./사진폴더` 로 넘기면 함께 처리합니다.")
 
+    context = PostContext(
+        shop_name=args.shop or "",
+        location=args.location or "",
+        service=args.service or "",
+        price=args.price or "",
+        duration=args.duration or "",
+        hours=args.hours or "",
+        parking=args.parking or "",
+        visit_reason=args.reason or "",
+        liked=args.liked or "",
+        disliked=args.disliked or "",
+        extra=args.memo or "",
+        stance="owner" if args.owner else "customer",
+    )
+    filled = context.filled()
+    if filled:
+        print(f"      매장 정보 {len(filled)}개 반영: {', '.join(filled)}")
+    else:
+        print("      매장 정보 없음 — 본문이 '직접 채우기' 자리로 남습니다 (--shop, --price 등)")
+
     print(f"\n[3/4] 초안 작성 중{' (Claude API)' if settings.has_anthropic else ''}...")
-    draft: DraftResult = generate_draft(plan, settings, images)
+    draft: DraftResult = generate_draft(plan, settings, images, context)
     if draft.generated_by == "prompt-only":
         print("      ANTHROPIC_API_KEY 가 없어 프롬프트만 만들었습니다 (prompt.md)")
 
@@ -312,6 +333,23 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--out", default="out", help="출력 폴더 (기본 out)")
     p.add_argument("--display", type=int, default=30, help="분석할 상위 글 수 (기본 30)")
     p.add_argument("--max-width", type=int, default=1600, help="사진 최대 가로폭")
+    shop = p.add_argument_group(
+        "매장 정보 (아는 것만 넣으세요 — 넣은 만큼 초안이 완성됩니다)"
+    )
+    shop.add_argument("--shop", help="업체명")
+    shop.add_argument("--location", help="위치")
+    shop.add_argument("--service", help="받은 시술 / 메뉴")
+    shop.add_argument("--price", help="가격")
+    shop.add_argument("--duration", help="걸린 시간")
+    shop.add_argument("--hours", help="영업시간")
+    shop.add_argument("--parking", help="주차")
+    shop.add_argument("--reason", help="방문 계기")
+    shop.add_argument("--liked", help="좋았던 점")
+    shop.add_argument("--disliked", help="아쉬웠던 점")
+    shop.add_argument("--memo", help="그 외 하고 싶은 말")
+    shop.add_argument(
+        "--owner", action="store_true", help="업체를 운영하는 사장 입장으로 씁니다 (기본: 손님)"
+    )
     p.set_defaults(func=cmd_build)
 
     p = sub.add_parser("keyword", help="연관 키워드 + 검색량 + 진입난이도")

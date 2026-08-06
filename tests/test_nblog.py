@@ -430,3 +430,76 @@ def test_unmeasured_keywords_rank_by_specificity_not_volume(monkeypatch):
     # 구체적인 쪽이 먼저 추천되어야 한다
     assert plan.sub_keywords[0] == "풍암동미용실근처추천"
     assert any("경쟁도 치열" in n for n in plan.notes)
+
+
+# ---------------------------------------------------------------------------
+# context.py — 매장 정보
+# ---------------------------------------------------------------------------
+
+
+def test_context_separates_filled_from_missing():
+    from nblog.context import PostContext
+
+    ctx = PostContext(shop_name="OO헤어", price="12만원")
+    assert ctx.filled() == {"업체명": "OO헤어", "가격": "12만원"}
+    assert "위치" in ctx.missing_labels()
+    assert "업체명" not in ctx.missing_labels()
+    assert not ctx.is_empty
+    assert PostContext().is_empty
+
+
+def test_context_prompt_tells_model_not_to_invent_missing_values():
+    from nblog.context import PostContext
+
+    block = PostContext(shop_name="OO헤어", price="12만원").as_prompt_block()
+    assert "OO헤어" in block
+    assert "12만원" in block
+    # 없는 값을 지어내지 말라는 지시가 반드시 있어야 한다
+    assert "지어내지" in block
+    assert "직접 채우기" in block
+
+
+def test_context_stance_changes_voice_label():
+    from nblog.context import PostContext
+
+    assert "손님" in PostContext().stance_label
+    assert "사장" in PostContext(stance="owner").stance_label
+    assert PostContext(stance="owner").is_owner
+
+
+def test_context_roundtrips_and_ignores_unknown_keys():
+    from nblog.context import PostContext
+
+    ctx = PostContext(shop_name="OO헤어", extra="메모")
+    restored = PostContext.from_dict({**ctx.to_dict(), "존재하지않는키": "x"})
+    assert restored.shop_name == "OO헤어"
+    assert restored.extra == "메모"
+
+
+def test_shop_info_reaches_prompt_and_skeleton():
+    """매장 정보를 넣었으면 초안 뼈대에도 그대로 실려야 한다.
+    이게 안 되면 사용자가 정보를 두 번 입력하게 된다."""
+    from nblog.context import PostContext
+    from nblog.draft import _prompt_only_placeholder, build_prompt
+
+    plan = _plan()
+    ctx = PostContext(shop_name="OO헤어", price="12만원", location="풍암동")
+
+    prompt = build_prompt(plan, None, ctx)
+    assert "OO헤어" in prompt and "12만원" in prompt
+
+    skeleton = _prompt_only_placeholder(plan, prompt, ctx)
+    assert "OO헤어" in skeleton
+    assert "12만원" in skeleton
+    # 제목에 업체명이 반영된다
+    assert skeleton.splitlines()[0].startswith("# ") and "OO헤어" in skeleton.splitlines()[0]
+
+
+def test_build_prompt_without_context_still_works():
+    """매장 정보가 없어도 기존 동작이 깨지지 않아야 한다."""
+    from nblog.draft import build_prompt
+
+    plan = _plan()
+    prompt = build_prompt(plan)
+    assert plan.main_keyword in prompt
+    assert "글 쓰는 사람의 입장" not in prompt

@@ -17,6 +17,7 @@ from dataclasses import dataclass
 import requests
 
 from .config import Settings
+from .context import PostContext
 from .images import ImageReport
 from .research import PostPlan
 
@@ -48,7 +49,11 @@ class DraftResult:
     generated_by: str  # "claude" | "prompt-only"
 
 
-def build_prompt(plan: PostPlan, images: ImageReport | None = None) -> str:
+def build_prompt(
+    plan: PostPlan,
+    images: ImageReport | None = None,
+    context: PostContext | None = None,
+) -> str:
     image_count = len(images.images) if images else plan.target_images
     outline = "\n".join(f"{i}. {s}" for i, s in enumerate(plan.outline, 1))
     insight = plan.insight
@@ -56,6 +61,13 @@ def build_prompt(plan: PostPlan, images: ImageReport | None = None) -> str:
     lines = [
         f"아래 설계안대로 네이버 블로그 글 초안을 써주세요.",
         "",
+    ]
+
+    # 실제 정보가 먼저 와야 모델이 그걸 뼈대로 삼는다.
+    if context and not context.is_empty:
+        lines.append(context.as_prompt_block())
+
+    lines += [
         f"## 메인 키워드",
         f"{plan.main_keyword}  (본문에 정확히 {plan.target_keyword_count}회 등장. 그 이상은 금지)",
         "",
@@ -100,14 +112,15 @@ def generate_draft(
     plan: PostPlan,
     settings: Settings,
     images: ImageReport | None = None,
+    context: PostContext | None = None,
     *,
     max_tokens: int = 4096,
 ) -> DraftResult:
-    prompt = build_prompt(plan, images)
+    prompt = build_prompt(plan, images, context)
 
     if not settings.has_anthropic:
         return DraftResult(
-            markdown=_prompt_only_placeholder(plan, prompt),
+            markdown=_prompt_only_placeholder(plan, prompt, context),
             prompt=prompt,
             generated_by="prompt-only",
         )
@@ -144,15 +157,34 @@ def generate_draft(
     return DraftResult(markdown=text, prompt=prompt, generated_by="claude")
 
 
-def _prompt_only_placeholder(plan: PostPlan, prompt: str) -> str:
-    """API 키가 없을 때. 뼈대 + 프롬프트 안내를 마크다운으로."""
-    body = [f"# {plan.recommended_titles[0] if plan.recommended_titles else plan.main_keyword}", ""]
+def _prompt_only_placeholder(
+    plan: PostPlan, prompt: str, context: PostContext | None = None
+) -> str:
+    """API 키가 없을 때. 뼈대 + 입력한 실제 정보 + 프롬프트 안내를 마크다운으로."""
+    title = plan.recommended_titles[0] if plan.recommended_titles else plan.main_keyword
+    if context and context.shop_name.strip():
+        title = f"{plan.main_keyword} {context.shop_name.strip()} 후기"
+    body = [f"# {title}", ""]
     body += [
         "> ANTHROPIC_API_KEY 가 없어 자동 초안을 만들지 않았습니다.",
         "> `prompt.md` 의 내용을 Claude 나 다른 도구에 붙여넣으면 초안이 나옵니다.",
         "> 아래는 그때 쓰일 뼈대입니다.",
         "",
     ]
+
+    # 입력한 정보를 표로 박아둔다. 이건 그대로 발행에 쓸 수 있는 내용이다.
+    if context and not context.is_empty:
+        body += ["## 매장 정보", ""]
+        for label, value in context.filled().items():
+            body.append(f"- **{label}**: {value}")
+        body.append("")
+        missing = context.missing_labels()
+        if missing:
+            body += [
+                f"> 아직 비어 있는 항목: {', '.join(missing)}",
+                "",
+            ]
+
     for i, section in enumerate(plan.outline, 1):
         body += [f"## {section}", "", f"{{{{직접 채우기}}}}", "", f"[사진{i}]", ""]
     body += ["---", "", "<!-- 프롬프트 -->", "", "```", prompt, "```"]
