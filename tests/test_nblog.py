@@ -361,3 +361,25 @@ def test_no_browser_automation_dependency():
     text = Path("requirements.txt").read_text(encoding="utf-8").lower()
     for banned in ("selenium", "playwright", "puppeteer", "undetected", "pyautogui"):
         assert banned not in text
+
+
+def test_build_plan_survives_openapi_failure(monkeypatch):
+    """오픈API 가 401 을 줘도 검색광고 데이터로 계속 진행해야 한다.
+
+    네이버가 2026-07-31 부터 검색 API 신규 신청을 차단했으므로,
+    막힌 키를 들고 있는 사용자가 흔하다. 이때 전체가 멈추면 도구를 못 쓴다."""
+    from nblog import research
+
+    class BoomOpenApi:
+        def __init__(self, settings):
+            raise RuntimeError("오픈API 인증 실패(401)")
+
+    monkeypatch.setattr(research, "OpenApiClient", BoomOpenApi)
+    settings = Settings(client_id="x", client_secret="y")
+
+    plan = research.build_plan("광주샐러드", settings)
+
+    assert plan.main_keyword == "광주샐러드"
+    assert plan.recommended_titles
+    assert plan.outline
+    assert any("오픈API" in n for n in plan.notes)

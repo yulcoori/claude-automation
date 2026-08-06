@@ -203,9 +203,21 @@ def build_plan(
     openapi: OpenApiClient | None = None
 
     if settings.has_openapi:
-        openapi = OpenApiClient(settings)
-        serp = openapi.search_blog(keyword, display=serp_display)
-        insight = analyze_serp(serp, keyword)
+        # 네이버가 2026-07-31 부터 검색 API 신규 신청을 차단했다. 기존 키가 없는 사용자는
+        # 여기서 401 을 받는데, 이건 보조 기능이므로 전체를 중단시켜서는 안 된다.
+        try:
+            openapi = OpenApiClient(settings)
+            serp = openapi.search_blog(keyword, display=serp_display)
+            insight = analyze_serp(serp, keyword)
+        except RuntimeError as exc:
+            openapi = None
+            serp = None
+            insight = analyze_serp(SerpResult(query=keyword, total=0), keyword)
+            notes.append(
+                f"오픈API 호출이 실패해 상위 노출 글 역분석을 건너뜁니다 ({exc}). "
+                "네이버가 2026년 7월 31일부터 검색 API 신규 신청을 차단했으므로, "
+                "키가 없다면 .env 의 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 을 비워두세요."
+            )
     else:
         notes.append(
             "오픈API 키가 없어 상위 노출 글 역분석을 건너뜀 — 제목 길이/최신성 기준은 일반값을 사용했습니다."
