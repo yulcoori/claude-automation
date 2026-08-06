@@ -19,6 +19,9 @@ dependencies = [
 [project.scripts]
 nblog = "nblog.cli:main"
 
+[project.gui-scripts]
+nblog-gui = "nblog.gui:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
