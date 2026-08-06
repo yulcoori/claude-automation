@@ -243,14 +243,26 @@ def build_plan(
 
     if stats:
         pool = [s for s in stats if s.keyword.replace(" ", "") != compact_kw]
-        # 진입 가능성이 좋은 것 우선, 그다음 검색량
-        ranked = sorted(
-            pool,
-            key=lambda s: (
-                {"매우좋음": 0, "좋음": 1, "보통": 2, "어려움": 3}.get(s.grade, 4),
-                -s.total_searches,
-            ),
-        )
+        measured = [s for s in pool if s.doc_ratio is not None]
+        if measured:
+            # 문서수를 아는 경우: 진입 가능성이 좋은 것 우선, 그다음 검색량
+            ranked = sorted(
+                pool,
+                key=lambda s: (
+                    {"매우좋음": 0, "좋음": 1, "보통": 2, "어려움": 3}.get(s.grade, 4),
+                    -s.total_searches,
+                ),
+            )
+        else:
+            # 문서수를 모르는 경우: 검색량 순으로 주면 가장 경쟁이 심한 키워드를
+            # 추천하게 된다. 대신 '구체적인 키워드일수록 경쟁이 덜하다'는 점을 이용해
+            # 길이를 우선 보고, 검색량은 뒤에서 참고한다.
+            ranked = sorted(pool, key=lambda s: (-len(s.keyword), -s.total_searches))
+            notes.append(
+                "문서수를 조회할 수 없어 진입 난이도를 계산하지 못했습니다 — "
+                "서브 키워드는 '구체적인 키워드일수록 경쟁이 덜하다'는 기준으로 골랐습니다. "
+                "검색량이 큰 키워드(표 위쪽)는 경쟁도 치열하니 제목에 단독으로 쓰지 마세요."
+            )
         sub_keywords = [s.keyword for s in ranked[:6]]
         long_tail = [s.keyword for s in ranked if len(s.keyword) >= len(compact_kw) + 2][:8]
         keyword_table = [
@@ -262,7 +274,7 @@ def build_plan(
                 "mobile_ratio": round(s.mobile_ratio, 2),
                 "competition": s.competition,
                 "blog_docs": s.blog_docs,
-                "doc_ratio": None if s.doc_ratio == float("inf") else round(s.doc_ratio, 2),
+                "doc_ratio": None if s.doc_ratio is None else round(s.doc_ratio, 2),
                 "grade": s.grade,
             }
             for s in stats
@@ -292,6 +304,13 @@ def build_plan(
     # audit 의 밀도 상한(2%)을 저절로 넘겨버리므로, 키워드 길이를 반드시 넣어야 한다.
     target_keyword_count = max(3, min(12, round(TARGET_DENSITY * target_chars / len(compact_kw))))
 
+    # 서브 키워드와 롱테일이 겹칠 수 있으므로 순서를 지키며 중복을 제거한다.
+    # 같은 태그를 두 번 붙이면 하나는 무시되고, 태그 낭비로 보인다.
+    tags: list[str] = []
+    for tag in [keyword] + sub_keywords[:6] + long_tail[:3]:
+        if tag and tag not in tags:
+            tags.append(tag)
+
     return PostPlan(
         main_keyword=keyword,
         sub_keywords=sub_keywords,
@@ -301,7 +320,7 @@ def build_plan(
         target_chars=target_chars,
         target_images=target_images,
         target_keyword_count=target_keyword_count,
-        tags=[keyword] + sub_keywords[:6] + long_tail[:3],
+        tags=tags,
         insight=insight,
         keyword_table=keyword_table,
         notes=notes,

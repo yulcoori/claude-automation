@@ -383,3 +383,50 @@ def test_build_plan_survives_openapi_failure(monkeypatch):
     assert plan.recommended_titles
     assert plan.outline
     assert any("오픈API" in n for n in plan.notes)
+
+
+def test_missing_doc_count_is_not_reported_as_easy():
+    """문서수를 조회하지 못한 키워드를 '매우좋음'으로 표시하면
+    사용자를 가장 경쟁이 치열한 키워드로 보내게 된다."""
+    unmeasured = KeywordStat("광주미용실", 1_400, 10_160, "높음", 15)  # blog_docs 기본값 0
+    assert unmeasured.blog_docs == 0
+    assert unmeasured.doc_ratio is None
+    assert unmeasured.grade == "측정불가"
+
+    measured_zero_docs = KeywordStat("아무도안쓴키워드", 100, 200, "낮음", 0, blog_docs=1)
+    assert measured_zero_docs.doc_ratio is not None
+    assert measured_zero_docs.grade == "매우좋음"
+
+
+def test_tags_have_no_duplicates():
+    """서브 키워드와 롱테일이 겹쳐도 태그는 한 번만 나와야 한다."""
+    from nblog.research import PostPlan, SerpInsight, build_plan
+
+    plan = build_plan("풍암동미용실", Settings())
+    assert len(plan.tags) == len(set(plan.tags))
+
+
+def test_unmeasured_keywords_rank_by_specificity_not_volume(monkeypatch):
+    """문서수를 모를 때 검색량 순으로 추천하면 가장 어려운 키워드를 권하게 된다."""
+    from nblog import research
+
+    stats = [
+        KeywordStat("광주미용실", 1_400, 10_160, "높음", 15),      # 검색량 최대, 짧음
+        KeywordStat("풍암동미용실근처추천", 100, 300, "낮음", 2),   # 검색량 최소, 구체적
+    ]
+
+    class FakeSearchAd:
+        def __init__(self, settings):
+            pass
+
+        def related_keywords(self, seed, limit=40):
+            return stats
+
+    monkeypatch.setattr(research, "SearchAdClient", FakeSearchAd)
+    settings = Settings(ad_api_key="a", ad_secret_key="b", ad_customer_id="c")
+
+    plan = research.build_plan("풍암동미용실", settings)
+
+    # 구체적인 쪽이 먼저 추천되어야 한다
+    assert plan.sub_keywords[0] == "풍암동미용실근처추천"
+    assert any("경쟁도 치열" in n for n in plan.notes)

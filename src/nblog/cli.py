@@ -57,10 +57,10 @@ def cmd_keyword(args: argparse.Namespace) -> int:
     print("-" * 78)
     for stat in stats:
         docs = f"{stat.blog_docs:,}" if stat.blog_docs else "-"
-        ratio = "-" if stat.doc_ratio == float("inf") or not stat.blog_docs else f"{stat.doc_ratio:.1f}"
+        ratio = "-" if stat.doc_ratio is None else f"{stat.doc_ratio:.1f}"
         print(
             f"{stat.keyword[:23]:<24} {stat.total_searches:>9,} {stat.mobile_ratio:>5.0%} "
-            f"{docs:>10} {ratio:>9}  {stat.grade if stat.blog_docs else '-'}"
+            f"{docs:>10} {ratio:>9}  {stat.grade}"
         )
     print("\n문서/검색 비율이 낮을수록 진입이 쉽습니다 (수요는 있고 글은 적음).\n")
     return 0

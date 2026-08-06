@@ -82,10 +82,17 @@ class KeywordStat:
         return self.mobile_searches / self.total_searches if self.total_searches else 0.0
 
     @property
-    def doc_ratio(self) -> float:
-        """문서수 / 월간 검색량. 낮을수록 '수요는 있는데 글은 적은' 좋은 키워드."""
-        if not self.total_searches:
-            return float("inf")
+    def has_doc_count(self) -> bool:
+        """문서수를 실제로 조회했는지. blog_docs 의 기본값 0 은 '조회 못 함'이지
+        '문서가 0건'이 아니다. 이 둘을 섞으면 난이도가 거꾸로 나온다."""
+        return self.blog_docs > 0
+
+    @property
+    def doc_ratio(self) -> float | None:
+        """문서수 / 월간 검색량. 낮을수록 '수요는 있는데 글은 적은' 좋은 키워드.
+        측정하지 못했으면 None."""
+        if not self.has_doc_count or not self.total_searches:
+            return None
         return self.blog_docs / self.total_searches
 
     @property
@@ -96,6 +103,10 @@ class KeywordStat:
         if self.total_searches < 100:
             return "검색량부족"
         r = self.doc_ratio
+        if r is None:
+            # 문서수를 모르면 난이도를 알 수 없다. 검색량만으로 추측해서
+            # '매우좋음' 같은 낙관적 등급을 붙이면 사용자를 잘못된 키워드로 보낸다.
+            return "측정불가"
         if r < 0.5:
             return "매우좋음"
         if r < 2:
