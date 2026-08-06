@@ -2,3 +2,8 @@ requests>=2.31.0
 Pillow>=10.2.0
 PyYAML>=6.0.1
 python-dotenv>=1.0.1
+
+# 브라우저 화면 (nblog web)
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9

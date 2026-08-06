@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
-rem 이 파일을 더블클릭하면 창이 열립니다. 터미널에 명령어를 칠 필요가 없습니다.
-rem 처음 실행할 때만 필요한 준비 작업을 자동으로 합니다.
+rem 이 파일을 더블클릭하면 브라우저에서 화면이 열립니다.
+rem 처음 실행할 때만 준비 작업을 자동으로 합니다.
 
 cd /d "%~dp0"
 
@@ -27,8 +27,9 @@ if not exist ".venv\Scripts\python.exe" (
 
 if not exist ".env" (
     copy ".env.example" ".env" >nul
-    echo .env 파일을 만들었습니다. API 키를 넣으면 키워드 검색량을 볼 수 있습니다.
-    echo.
 )
 
-start "" ".venv\Scripts\pythonw.exe" -m nblog.gui
+echo 브라우저가 곧 열립니다. 이 검은 창은 닫지 마세요.
+echo 다 쓰신 뒤에는 이 창을 닫으면 종료됩니다.
+echo.
+".venv\Scripts\python.exe" -m nblog web

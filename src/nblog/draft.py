@@ -12,6 +12,7 @@ ANTHROPIC_API_KEY 가 있으면 Claude API 로 초안을 만들고,
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import requests
@@ -155,6 +156,64 @@ def generate_draft(
         raise RuntimeError(f"Claude 응답이 비어 있습니다: {json.dumps(payload)[:300]}")
 
     return DraftResult(markdown=text, prompt=prompt, generated_by="claude")
+
+
+def stream_draft(
+    plan: PostPlan,
+    settings: Settings,
+    images: ImageReport | None = None,
+    context: PostContext | None = None,
+    *,
+    max_tokens: int = 4096,
+) -> Iterator[str]:
+    """초안을 조각 단위로 내보낸다. 웹 화면에서 글이 써지는 걸 보여주기 위한 것.
+
+    API 키가 없으면 뼈대를 한 번에 내보낸다.
+    """
+    prompt = build_prompt(plan, images, context)
+
+    if not settings.has_anthropic:
+        yield _prompt_only_placeholder(plan, prompt, context)
+        return
+
+    with requests.post(
+        _API_URL,
+        headers={
+            "x-api-key": settings.anthropic_api_key,
+            "anthropic-version": _API_VERSION,
+            "content-type": "application/json",
+        },
+        json={
+            "model": settings.anthropic_model,
+            "max_tokens": max_tokens,
+            "system": _SYSTEM,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": True,
+        },
+        stream=True,
+        timeout=300,
+    ) as resp:
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"Claude API 호출 실패 ({resp.status_code}): {resp.text[:300]}"
+            )
+        for raw in resp.iter_lines(decode_unicode=True):
+            if not raw or not raw.startswith("data:"):
+                continue
+            payload = raw[5:].strip()
+            if not payload or payload == "[DONE]":
+                continue
+            try:
+                event = json.loads(payload)
+            except json.JSONDecodeError:
+                continue
+            if event.get("type") == "content_block_delta":
+                text = event.get("delta", {}).get("text")
+                if text:
+                    yield text
+            elif event.get("type") == "error":
+                message = event.get("error", {}).get("message", "알 수 없는 오류")
+                raise RuntimeError(f"Claude API 오류: {message}")
 
 
 def _prompt_only_placeholder(

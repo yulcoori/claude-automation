@@ -319,6 +319,17 @@ def cmd_audit(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 
+def cmd_web(args: argparse.Namespace) -> int:
+    try:
+        from .webapp import serve
+    except ImportError as exc:
+        return _err(
+            f"웹 화면에 필요한 패키지가 없습니다 ({exc}).\n"
+            "  pip install -r requirements.txt 를 실행하세요."
+        )
+    return serve(host=args.host, port=args.port, open_browser=not args.no_browser)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="nblog",
@@ -326,6 +337,12 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="자동 발행 기능은 의도적으로 넣지 않았습니다. docs/naver-risk.md 를 읽어보세요.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("web", help="브라우저에서 쓰는 화면 열기 (권장)")
+    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--no-browser", action="store_true", help="브라우저를 자동으로 열지 않음")
+    p.set_defaults(func=cmd_web)
 
     p = sub.add_parser("build", help="원스톱: 리서치 + 사진 + 초안 + 체크리스트")
     p.add_argument("keyword", help="메인 키워드")

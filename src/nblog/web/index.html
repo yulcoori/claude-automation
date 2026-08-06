@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>네이버 블로그 글 만들기</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f8fa;
+    --surface-2: #eff1f5;
+    --border: #e3e6eb;
+    --text: #16181c;
+    --muted: #6b7280;
+    --faint: #9aa1ac;
+    --accent: #03c75a;
+    --accent-dark: #02a94c;
+    --accent-soft: #e8f9ef;
+    --warn: #b26a00;
+    --warn-soft: #fff6e5;
+    --error: #d93025;
+    --error-soft: #fdecea;
+    --ok: #0f9d58;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕",
+          "Noto Sans KR", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; cursor: pointer; }
+  input, textarea { font: inherit; color: inherit; }
+
+  /* ---------- 상단 ---------- */
+  header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 26px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 9px; }
+  .brand b { font-size: 16px; letter-spacing: -.2px; }
+  .brand span { color: var(--faint); font-size: 12px; }
+  .chips { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    white-space: nowrap;
+  }
+  .chip.on { background: var(--accent-soft); border-color: #b6ebcd; color: #06713a; }
+  .chip.off { background: var(--warn-soft); border-color: #f3dcae; color: var(--warn); }
+
+  /* ---------- 레이아웃 ---------- */
+  main {
+    display: grid;
+    grid-template-columns: minmax(340px, 420px) 1fr;
+    gap: 20px;
+    padding: 20px 26px 40px;
+    align-items: start;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .pad { padding: 20px; }
+
+  .step-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+  .num {
+    width: 20px; height: 20px; border-radius: 6px; background: var(--accent);
+    color: #fff; font-size: 11px; font-weight: 700;
+    display: grid; place-items: center; flex: none;
+  }
+  .step-head h2 { margin: 0; font-size: 13.5px; font-weight: 700; }
+  .step-head em { font-style: normal; color: var(--faint); font-size: 11.5px; }
+  .hint { color: var(--faint); font-size: 12px; margin: 7px 0 0; }
+
+  input[type=text], textarea {
+    width: 100%; padding: 11px 13px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px; outline: none;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  input[type=text]:focus, textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input.big { font-size: 16px; padding: 13px 14px; }
+  textarea { resize: vertical; min-height: 72px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+  @media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
+  .fld label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+  .fld input { padding: 9px 11px; font-size: 13px; }
+  .fld .eg { color: var(--faint); font-size: 11px; margin-top: 4px; }
+
+  /* ---------- 라디오 ---------- */
+  .stance { display: flex; gap: 8px; margin-bottom: 16px; }
+  .stance label {
+    flex: 1; text-align: center; padding: 9px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12.5px; cursor: pointer; background: var(--bg);
+    transition: all .12s;
+  }
+  .stance input { display: none; }
+  .stance input:checked + span { color: #06713a; font-weight: 700; }
+  .stance label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* ---------- 사진 ---------- */
+  .drop {
+    border: 1.5px dashed var(--border); border-radius: var(--radius);
+    background: var(--surface); padding: 22px 16px; text-align: center;
+    transition: all .14s; cursor: pointer;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop b { display: block; font-size: 13px; margin-bottom: 3px; }
+  .drop small { color: var(--faint); font-size: 11.5px; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .thumbs img {
+    width: 52px; height: 52px; object-fit: cover; border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .thumbs .more {
+    width: 52px; height: 52px; border-radius: 6px; background: var(--surface-2);
+    color: var(--muted); font-size: 11px; display: grid; place-items: center;
+  }
+
+  /* ---------- 버튼 ---------- */
+  .btn {
+    display: block; width: 100%; padding: 14px; border: 0; border-radius: 9px;
+    background: var(--accent); color: #fff; font-size: 15px; font-weight: 700;
+    transition: background .12s, transform .06s;
+  }
+  .btn:hover:not(:disabled) { background: var(--accent-dark); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:disabled { background: #bfe9d1; cursor: default; }
+  .btn.ghost {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    font-size: 13px; font-weight: 600; padding: 10px;
+  }
+  .btn.ghost:hover { background: var(--surface); }
+  .row { display: flex; gap: 8px; }
+  .row .btn { width: auto; flex: 1; }
+
+  /* ---------- 오른쪽 ---------- */
+  .steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .pill {
+    font-size: 11.5px; padding: 5px 11px; border-radius: 999px;
+    background: var(--surface-2); color: var(--faint); white-space: nowrap;
+  }
+  .pill.active { background: var(--accent); color: #fff; }
+  .pill.done { background: var(--accent-soft); color: #06713a; }
+
+  .bar { height: 4px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+
+  #output {
+    margin-top: 16px; min-height: 380px; word-break: break-word;
+    font-size: 15px; line-height: 1.9;
+  }
+  #output:empty::after {
+    content: "왼쪽에 키워드를 넣고 ‘글 만들기’ 를 누르면 여기에 글이 써집니다.";
+    color: var(--faint); font-size: 13px;
+  }
+  #output h1 {
+    font-size: 21px; line-height: 1.45; margin: 0 0 18px; letter-spacing: -.3px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  #output h2 {
+    font-size: 16.5px; line-height: 1.5; margin: 30px 0 10px; letter-spacing: -.2px;
+  }
+  #output h3 { font-size: 14.5px; margin: 22px 0 8px; }
+  #output p { margin: 0 0 15px; }
+  #output ul { margin: 0 0 15px; padding-left: 20px; }
+  #output li { margin-bottom: 5px; }
+  #output strong { font-weight: 700; }
+  #output .fill {
+    background: var(--warn-soft); color: #7a4a00; border-radius: 5px;
+    padding: 1px 7px; font-size: 13.5px; border: 1px solid #f3dcae;
+  }
+  #output .photo {
+    display: flex; align-items: center; gap: 10px; margin: 0 0 15px;
+    background: var(--surface); border: 1px dashed var(--border);
+    border-radius: 8px; padding: 9px 13px; color: var(--muted); font-size: 12.5px;
+  }
+  #output .photo img {
+    width: 40px; height: 40px; object-fit: cover; border-radius: 5px; flex: none;
+  }
+  #output .photo b { color: var(--text); font-size: 12.5px; }
+  .cursor {
+    display: inline-block; width: 7px; height: 17px; background: var(--accent);
+    vertical-align: -3px; animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 14px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; font-size: 12px;
+  }
+  .stat b { display: block; font-size: 15px; margin-top: 2px; }
+
+  .checks { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+  .checks li {
+    font-size: 12.5px; padding: 8px 11px; border-radius: 7px; background: var(--surface);
+  }
+  .checks li.error { background: var(--error-soft); color: #8f1d13; }
+  .checks li.warn { background: var(--warn-soft); color: #7a4a00; }
+  .checks li b { font-weight: 700; }
+
+  .titles { display: grid; gap: 6px; }
+  .titles button {
+    text-align: left; padding: 10px 12px; border: 1px solid var(--border);
+    background: var(--bg); border-radius: 8px; font-size: 13px; line-height: 1.5;
+  }
+  .titles button:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+  .kw { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .kw th, .kw td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: left; }
+  .kw th { color: var(--muted); font-weight: 600; background: var(--surface); }
+  .kw td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .kwwrap { max-height: 260px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+
+  .tagbox {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 11px 12px; font-size: 12.5px; color: var(--muted); word-break: break-all;
+  }
+  .sec { margin-top: 18px; }
+  .sec > h3 {
+    margin: 0 0 9px; font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: none; letter-spacing: .2px;
+  }
+  .notice {
+    background: var(--warn-soft); border: 1px solid #f3dcae; color: #7a4a00;
+    border-radius: 8px; padding: 11px 13px; font-size: 12.5px; margin-top: 14px;
+  }
+  .notice a { color: inherit; }
+  .toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(10px);
+    background: #16181c; color: #fff; padding: 11px 18px; border-radius: 8px;
+    font-size: 13px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>네이버 블로그 글 만들기</b><span>발행 직전까지 자동으로</span></div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main>
+  <!-- ================= 왼쪽: 입력 ================= -->
+  <div>
+    <div class="card pad">
+      <div class="step-head"><i class="num">1</i><h2>키워드</h2></div>
+      <input type="text" id="keyword" class="big" placeholder="풍암동미용실" autocomplete="off">
+      <p class="hint">동네 이름을 붙이면 경쟁이 적어 상위 노출이 쉽습니다.</p>
+    </div>
+
+    <div class="card pad" style="margin-top:14px">
+      <div class="step-head"><i class="num">2</i><h2>사진</h2><em>없어도 됩니다</em></div>
+      <div class="drop" id="drop">
+        <b>사진을 여기로 끌어다 놓으세요</b>
+        <small>또는 눌러서 고르기 · 자동으로 크기·이름·중복 정리</small>
+        <input type="file" id="files" accept="image/*" multiple class="hide">
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+
+    <div class="card pad" style="margin-top:14px">
+      <div class="step-head"><i class="num">3</i><h2>매장 정보</h2><em>아는 것만</em></div>
+      <p class="hint" style="margin:0 0 13px">
+        넣은 내용은 본문에 그대로 들어갑니다. 비운 항목은 지어내지 않고 빈칸으로 남깁니다.
+      </p>
+
+      <div class="stance">
+        <label><input type="radio" name="stance" value="customer" checked><span>이용한 손님</span></label>
+        <label><input type="radio" name="stance" value="owner"><span>운영하는 사장</span></label>
+      </div>
+
+      <div class="grid2" id="shop"></div>
+
+      <div class="fld" style="margin-top:12px">
+        <label for="extra">그 외 하고 싶은 말</label>
+        <textarea id="extra" placeholder="글에 꼭 넣고 싶은 내용을 자유롭게 적으세요."></textarea>
+      </div>
+    </div>
+
+    <button class="btn" id="go" style="margin-top:14px">글 만들기</button>
+  </div>
+
+  <!-- ================= 오른쪽: 결과 ================= -->
+  <div class="card pad" id="right">
+    <div class="steps" id="steps">
+      <span class="pill" data-n="1">1 키워드 리서치</span>
+      <span class="pill" data-n="2">2 사진 정리</span>
+      <span class="pill" data-n="3">3 본문 작성</span>
+      <span class="pill" data-n="4">4 검사·저장</span>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+
+    <div id="result" class="hide">
+      <div class="stats" id="stats"></div>
+      <div class="row" style="margin-bottom:4px">
+        <button class="btn ghost" id="copyEditor">네이버 에디터용 복사</button>
+        <button class="btn ghost" id="copyMd">글만 복사</button>
+        <button class="btn ghost" id="dl">전체 내려받기</button>
+      </div>
+    </div>
+
+    <div id="output"></div>
+
+    <div id="extras"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SHOP_FIELDS = [
+  ["shop_name",   "업체명",           "OO헤어"],
+  ["location",    "위치",             "풍암동 월드컵경기장 근처"],
+  ["service",     "받은 시술 / 메뉴", "뿌리매직 + 클리닉"],
+  ["price",       "가격",             "12만원 (클리닉 포함)"],
+  ["duration",    "걸린 시간",        "3시간 30분"],
+  ["hours",       "영업시간",         "10~20시, 화요일 휴무"],
+  ["parking",     "주차",             "지하 2시간 무료"],
+  ["visit_reason","방문 계기",        "아침마다 드라이가 힘들어서"],
+  ["liked",       "좋았던 점",        "상담이 꼼꼼했다"],
+  ["disliked",    "아쉬웠던 점",      "예약 없이 가서 40분 기다렸다"],
+];
+
+const $ = (s) => document.querySelector(s);
+let sessionId = null, running = false, lastRun = null, lastMd = "", lastHtml = "";
+let photoNames = [], photoRun = null;
+
+// ---------- 마크다운 → HTML ----------
+// 글이 써지는 동안 #, ## 기호가 그대로 보이면 완성도가 떨어진다.
+// 필요한 문법만 직접 변환한다 (제목, 목록, 굵게, 사진 자리, 채우기 자리).
+function mdToHtml(md) {
+  const esc = (s) => escapeHtml(s);
+  const inline = (s) => esc(s)
+    .replace(/\{\{([^}]*)\}\}/g, (_m, t) => `<span class="fill">${t.trim() || "직접 채우기"}</span>`)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+
+  const out = [];
+  let list = null;
+
+  const closeList = () => { if (list) { out.push(`<ul>${list.join("")}</ul>`); list = null; } };
+
+  for (const raw of md.split("\n")) {
+    const line = raw.trimEnd();
+
+    if (!line.trim()) { closeList(); continue; }
+
+    const photo = /^\[사진\s*(\d+)\](.*)$/.exec(line.trim());
+    if (photo) {
+      closeList();
+      const n = +photo[1], note = photo[2].trim();
+      const name = photoNames[n - 1];
+      const thumb = name && photoRun
+        ? `<img src="/api/image/${encodeURIComponent(photoRun)}/${encodeURIComponent(name)}" alt="">`
+        : "";
+      out.push(`<div class="photo">${thumb}<span><b>사진 ${n}</b>${
+        name ? ` · ${esc(name)}` : ""}${note ? ` — ${esc(note)}` : ""}</span></div>`);
+      continue;
+    }
+
+    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
+    if (heading) {
+      closeList();
+      const level = heading[1].length;
+      out.push(`<h${level}>${inline(heading[2])}</h${level}>`);
+      continue;
+    }
+
+    const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
+    if (bullet) {
+      (list ||= []).push(`<li>${inline(bullet[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    out.push(`<p>${inline(line)}</p>`);
+  }
+  closeList();
+  return out.join("");
+}
+
+// 글자가 올 때마다 다시 그리면 낭비이므로 프레임마다 한 번만 그린다.
+let renderQueued = false, streaming = false;
+function renderStream() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    // 그리기가 예약된 사이에 작성이 끝났을 수 있다. 그때 커서를 붙이면 잔상이 남는다.
+    $("#output").innerHTML = mdToHtml(lastMd) + (streaming ? '<span class="cursor"></span>' : "");
+  });
+}
+
+function renderFinal() {
+  streaming = false;
+  $("#output").innerHTML = mdToHtml(lastMd);
+}
+
+// ---------- 매장 정보 입력칸 ----------
+$("#shop").innerHTML = SHOP_FIELDS.map(([id, label, eg]) => `
+  <div class="fld">
+    <label for="f_${id}">${label}</label>
+    <input type="text" id="f_${id}" placeholder="${eg}" autocomplete="off">
+  </div>`).join("");
+
+// ---------- API 키 상태 ----------
+fetch("/api/status").then(r => r.json()).then(s => {
+  const chip = (on, onText, offText) =>
+    `<span class="chip ${on ? "on" : "off"}">${on ? onText : offText}</span>`;
+  $("#chips").innerHTML =
+    chip(s.searchad, "키워드 데이터 연결됨", "키워드 데이터 없음") +
+    chip(s.anthropic, "AI 글쓰기 " + (s.model || ""), "AI 글쓰기 꺼짐 — 뼈대만 나옵니다");
+  if (!s.anthropic) {
+    $("#extras").innerHTML = `<div class="notice">
+      <b>AI 글쓰기가 꺼져 있습니다.</b><br>
+      지금 누르면 목차 뼈대만 나옵니다. 실제 글을 받으려면
+      <code>.env</code> 파일에 <code>ANTHROPIC_API_KEY</code> 를 넣고 이 창을 새로고침하세요.
+      (console.anthropic.com 에서 발급, 글 한 편에 수십 원)
+    </div>`;
+  }
+});
+
+// ---------- 사진 ----------
+const drop = $("#drop"), fileInput = $("#files");
+drop.onclick = () => fileInput.click();
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = (e) => {
+  e.preventDefault(); drop.classList.remove("over");
+  if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+};
+fileInput.onchange = () => { if (fileInput.files.length) uploadFiles(fileInput.files); };
+
+async function uploadFiles(files) {
+  const list = [...files].filter(f => f.type.startsWith("image/"));
+  if (!list.length) { toast("이미지 파일이 아닙니다."); return; }
+
+  // 올리기 전에 미리보기부터 보여준다
+  $("#thumbs").innerHTML = list.slice(0, 12).map(f =>
+    `<img src="${URL.createObjectURL(f)}" alt="">`).join("") +
+    (list.length > 12 ? `<div class="more">+${list.length - 12}</div>` : "");
+  drop.querySelector("b").textContent = `사진 ${list.length}장 올리는 중...`;
+
+  const form = new FormData();
+  list.forEach(f => form.append("files", f, f.name));
+  try {
+    const res = await fetch("/api/upload", { method: "POST", body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "업로드 실패");
+    sessionId = data.session;
+    drop.querySelector("b").textContent = `사진 ${data.count}장 준비됨`;
+    drop.querySelector("small").textContent = "다시 눌러 바꿀 수 있습니다";
+  } catch (err) {
+    drop.querySelector("b").textContent = "사진을 여기로 끌어다 놓으세요";
+    toast(err.message);
+  }
+}
+
+// ---------- 진행 표시 ----------
+function setStep(n) {
+  document.querySelectorAll(".pill").forEach(p => {
+    const v = +p.dataset.n;
+    p.className = "pill" + (v < n ? " done" : v === n ? " active" : "");
+  });
+  $("#bar").style.width = (n / 4 * 100) + "%";
+}
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+// ---------- 글 만들기 ----------
+$("#go").onclick = async () => {
+  if (running) return;
+  const keyword = $("#keyword").value.trim();
+  if (!keyword) { toast("키워드를 입력해주세요."); $("#keyword").focus(); return; }
+
+  running = true;
+  $("#go").disabled = true;
+  $("#go").textContent = "만드는 중...";
+  $("#output").innerHTML = "";
+  $("#extras").innerHTML = "";
+  $("#result").classList.add("hide");
+  lastMd = "";
+  photoNames = []; photoRun = null;
+  streaming = true;
+
+  const context = { stance: document.querySelector("input[name=stance]:checked").value,
+                    extra: $("#extra").value.trim() };
+  SHOP_FIELDS.forEach(([id]) => context[id] = $("#f_" + id).value.trim());
+
+  const res = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ keyword, session: sessionId, context }),
+  });
+
+  if (!res.ok) { finish(); toast("요청이 실패했습니다."); return; }
+
+  // SSE 를 손으로 읽는다 (EventSource 는 POST 를 못 보낸다)
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop();
+    for (const part of parts) {
+      const ev = /^event:\s*(.+)$/m.exec(part);
+      const dt = /^data:\s*([\s\S]+)$/m.exec(part);
+      if (!ev || !dt) continue;
+      let payload; try { payload = JSON.parse(dt[1]); } catch { continue; }
+      handle(ev[1].trim(), payload);
+    }
+  }
+  renderFinal();
+  finish();
+};
+
+function finish() {
+  running = false;
+  $("#go").disabled = false;
+  $("#go").textContent = "글 만들기";
+}
+
+function handle(event, d) {
+  if (event === "step") {
+    setStep(d.n);
+    if (d.n === 3) renderStream();
+  }
+  else if (event === "text") {
+    lastMd += d.chunk;
+    renderStream();
+  }
+  else if (event === "plan") { renderPlan(d); }
+  else if (event === "images") {
+    if (d.warnings?.length) {
+      $("#extras").insertAdjacentHTML("beforeend",
+        `<div class="notice">${d.warnings.map(w => escapeHtml(w)).join("<br>")}</div>`);
+    }
+  }
+  else if (event === "done") { renderDone(d); }
+  else if (event === "failed") {
+    renderFinal();
+    $("#extras").insertAdjacentHTML("beforeend",
+      `<div class="notice" style="background:var(--error-soft);border-color:#f5c6c2;color:#8f1d13">
+        <b>오류가 났습니다.</b><br>${escapeHtml(d.message)}</div>`);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+}
+
+function renderPlan(d) {
+  let html = "";
+
+  if (d.titles?.length) {
+    html += `<div class="sec"><h3>제목 후보 — 누르면 복사됩니다</h3><div class="titles">` +
+      d.titles.map(t => `<button data-copy="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("") +
+      `</div></div>`;
+  }
+  if (d.keywords?.length) {
+    html += `<div class="sec"><h3>키워드</h3><div class="kwwrap"><table class="kw">
+      <thead><tr><th>키워드</th><th class="n">월 검색량</th><th class="n">모바일</th><th>난이도</th></tr></thead>
+      <tbody>` + d.keywords.map(k => `<tr>
+        <td>${escapeHtml(k.keyword)}</td>
+        <td class="n">${k.searches.toLocaleString()}</td>
+        <td class="n">${Math.round(k.mobile_ratio * 100)}%</td>
+        <td>${escapeHtml(k.grade)}</td></tr>`).join("") +
+      `</tbody></table></div></div>`;
+  }
+  if (d.tags?.length) {
+    const tags = d.tags.map(t => "#" + t.replace(/\s+/g, "")).join(" ");
+    html += `<div class="sec"><h3>태그 — 누르면 복사됩니다</h3>
+      <div class="tagbox" data-copy="${escapeHtml(tags)}" style="cursor:pointer">${escapeHtml(tags)}</div></div>`;
+  }
+  if (d.notes?.length) {
+    html += `<div class="notice">${d.notes.map(n => escapeHtml(n)).join("<br><br>")}</div>`;
+  }
+  $("#extras").insertAdjacentHTML("beforeend", html);
+}
+
+function renderDone(d) {
+  lastRun = d.run;
+  lastHtml = d.html;
+  // 사진 이름을 알게 됐으니 본문의 [사진N] 자리에 실제 썸네일을 붙여 다시 그린다
+  photoRun = d.run;
+  photoNames = d.images || [];
+  renderFinal();
+  setStep(4);
+  document.querySelectorAll(".pill").forEach(p => p.className = "pill done");
+
+  $("#result").classList.remove("hide");
+  $("#stats").innerHTML = d.generated_by === "claude" ? `
+    <div class="stat">글자수<b>${d.chars.toLocaleString()}자</b></div>
+    <div class="stat">키워드<b>${d.keyword_count}회</b></div>
+    <div class="stat">밀도<b>${d.density}%</b></div>
+    <div class="stat">사진<b>${d.images.length}장</b></div>
+  ` : `<div class="stat">AI 글쓰기가 꺼져 있어 뼈대만 만들었습니다<b>—</b></div>`;
+
+  const bad = d.checks.filter(c => c.level !== "ok");
+  if (bad.length) {
+    $("#extras").insertAdjacentHTML("beforeend",
+      `<div class="sec"><h3>발행 전 확인</h3><ul class="checks">` +
+      bad.map(c => `<li class="${c.level}"><b>${escapeHtml(c.label)}</b> — ${escapeHtml(c.detail)}</li>`).join("") +
+      `</ul></div>`);
+  }
+  $("#extras").insertAdjacentHTML("beforeend",
+    `<div class="notice">저장 위치: <code>${escapeHtml(d.folder)}</code><br>
+     자동 발행은 넣지 않았습니다 — 매크로 발행은 저품질 판정으로 이어집니다.</div>`);
+}
+
+// ---------- 복사 ----------
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-copy]");
+  if (!el) return;
+  navigator.clipboard.writeText(el.dataset.copy).then(() => toast("복사했습니다."));
+});
+
+$("#copyMd").onclick = () => {
+  navigator.clipboard.writeText(lastMd).then(() => toast("글을 복사했습니다."));
+};
+
+$("#copyEditor").onclick = async () => {
+  if (!lastHtml) { toast("먼저 글을 만들어주세요."); return; }
+  // 서식이 살아있게 text/html 로 넣는다. 스마트에디터에 붙이면 제목·문단이 유지된다.
+  try {
+    const body = /<article>([\s\S]*)<\/article>/.exec(lastHtml);
+    const html = body ? body[1] : lastHtml;
+    await navigator.clipboard.write([new ClipboardItem({
+      "text/html": new Blob([html], { type: "text/html" }),
+      "text/plain": new Blob([lastMd], { type: "text/plain" }),
+    })]);
+    toast("복사했습니다. 스마트에디터에 붙여넣으세요.");
+  } catch {
+    navigator.clipboard.writeText(lastMd).then(() => toast("글만 복사했습니다."));
+  }
+};
+
+$("#dl").onclick = () => {
+  if (!lastRun) { toast("먼저 글을 만들어주세요."); return; }
+  location.href = "/api/download/" + encodeURIComponent(lastRun);
+};
+
+$("#keyword").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#go").click(); });
+</script>
+</body>
+</html>

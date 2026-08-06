@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 
@@ -351,7 +352,7 @@ def test_cli_exposes_no_publish_command():
     parser = build_parser()
     actions = [a for a in parser._actions if hasattr(a, "choices") and a.choices]
     commands = set(actions[0].choices) if actions else set()
-    assert commands == {"build", "keyword", "serp", "images", "plan", "audit"}
+    assert commands == {"web", "build", "keyword", "serp", "images", "plan", "audit"}
     for banned in ("publish", "post", "upload", "login"):
         assert banned not in commands
 
@@ -503,3 +504,139 @@ def test_build_prompt_without_context_still_works():
     prompt = build_prompt(plan)
     assert plan.main_keyword in prompt
     assert "글 쓰는 사람의 입장" not in prompt
+
+
+# ---------------------------------------------------------------------------
+# webapp.py — 브라우저 화면
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def web_client(tmp_path, monkeypatch):
+    """네이버·Claude 호출만 대체하고 나머지는 실제 코드로 띄운다."""
+    from fastapi.testclient import TestClient
+
+    from nblog import webapp
+    from nblog.naver import SerpResult
+    from nblog.research import PostPlan, _build_outline, _build_titles, analyze_serp
+
+    monkeypatch.chdir(tmp_path)
+
+    def fake_plan(keyword, settings, **kw):
+        insight = analyze_serp(SerpResult(query=keyword, total=0), keyword)
+        subs = ["매직"]
+        return PostPlan(
+            main_keyword=keyword, sub_keywords=subs, long_tail=[],
+            recommended_titles=_build_titles(keyword, insight, subs),
+            outline=_build_outline(keyword, subs, insight),
+            target_chars=1700, target_images=8, target_keyword_count=4,
+            tags=[keyword] + subs, insight=insight, keyword_table=[], notes=[],
+        )
+
+    def fake_stream(plan, settings, images=None, context=None, **kw):
+        yield f"# {plan.main_keyword} 후기\n\n"
+        if context and context.shop_name:
+            yield f"{context.shop_name} 에 갔습니다.\n\n"
+        yield "[사진1]\n"
+
+    monkeypatch.setattr(webapp, "build_plan", fake_plan)
+    monkeypatch.setattr(webapp, "stream_draft", fake_stream)
+    monkeypatch.setattr(
+        webapp, "Settings",
+        type("S", (), {"load": staticmethod(lambda: Settings(anthropic_api_key="k"))}),
+    )
+    return TestClient(webapp.create_app())
+
+
+def _read_sse(response) -> list[tuple[str, dict]]:
+    import re as _re
+
+    events = []
+    buffer = ""
+    for chunk in response.iter_text():
+        buffer += chunk
+        while "\n\n" in buffer:
+            part, buffer = buffer.split("\n\n", 1)
+            ev = _re.search(r"^event:\s*(.+)$", part, _re.M)
+            dt = _re.search(r"^data:\s*([\s\S]+)$", part, _re.M)
+            if ev and dt:
+                events.append((ev.group(1).strip(), json.loads(dt.group(1))))
+    return events
+
+
+def test_web_index_and_status(web_client):
+    page = web_client.get("/")
+    assert page.status_code == 200
+    assert "글 만들기" in page.text
+    # favicon 이 없으면 브라우저 콘솔에 404 가 남는다
+    assert web_client.get("/favicon.ico").status_code == 200
+    assert web_client.get("/api/status").json()["anthropic"] is True
+
+
+def test_web_generate_streams_text_without_losing_characters(web_client):
+    """SSE 로 쪼개 보낸 글자가 하나도 빠지지 않고 재조립되어야 한다."""
+    with web_client.stream(
+        "POST", "/api/generate",
+        json={"keyword": "풍암동미용실", "context": {"shop_name": "OO헤어"}},
+    ) as resp:
+        assert resp.status_code == 200
+        events = _read_sse(resp)
+
+    body = "".join(d["chunk"] for e, d in events if e == "text")
+    assert body == "# 풍암동미용실 후기\n\nOO헤어 에 갔습니다.\n\n[사진1]\n"
+    assert [e for e, _ in events if e != "text"][-1] == "done"
+
+
+def test_web_generate_requires_keyword(web_client):
+    assert web_client.post("/api/generate", json={"keyword": "   "}).status_code == 400
+
+
+def test_web_upload_and_serves_processed_images(web_client):
+    import io as _io
+
+    files = []
+    for i in range(3):
+        buf = _io.BytesIO()
+        Image.new("RGB", (2400, 1800), (40 * i + 20, 90, 150)).save(buf, "JPEG")
+        buf.seek(0)
+        files.append(("files", (f"KakaoTalk_{i}.jpg", buf, "image/jpeg")))
+
+    up = web_client.post("/api/upload", files=files)
+    assert up.status_code == 200
+    session = up.json()["session"]
+    assert up.json()["count"] == 3
+
+    with web_client.stream(
+        "POST", "/api/generate",
+        json={"keyword": "풍암동미용실", "session": session, "context": {}},
+    ) as resp:
+        events = _read_sse(resp)
+
+    done = next(d for e, d in events if e == "done")
+    assert len(done["images"]) == 3
+    # 처리된 사진을 브라우저가 미리보기로 받아갈 수 있어야 한다
+    served = web_client.get(f"/api/image/{done['run']}/{done['images'][0]}")
+    assert served.status_code == 200
+    assert len(served.content) > 0
+    assert web_client.get(f"/api/download/{done['run']}").status_code == 200
+
+
+def test_web_rejects_path_traversal(web_client):
+    """run 이름으로 out/ 밖의 파일을 읽어낼 수 없어야 한다."""
+    for bad in ["../../etc/passwd", "..", "../.env"]:
+        assert web_client.get(f"/api/download/{bad}").status_code == 404
+        assert web_client.get(f"/api/image/{bad}/x.jpg").status_code == 404
+
+
+def test_web_upload_rejects_too_many_files(web_client):
+    import io as _io
+
+    from nblog import webapp
+
+    files = []
+    for i in range(webapp.MAX_UPLOAD_FILES + 1):
+        buf = _io.BytesIO()
+        Image.new("RGB", (10, 10), (0, 0, 0)).save(buf, "JPEG")
+        buf.seek(0)
+        files.append(("files", (f"{i}.jpg", buf, "image/jpeg")))
+    assert web_client.post("/api/upload", files=files).status_code == 400
