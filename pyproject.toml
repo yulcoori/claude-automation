@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nblog"
+version = "0.1.0"
+description = "네이버 블로그 포스팅 준비 도구 — 발행 직전까지 자동화"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "requests>=2.31.0",
+    "Pillow>=10.2.0",
+    "PyYAML>=6.0.1",
+    "python-dotenv>=1.0.1",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+    "python-multipart>=0.0.9",
+]
+
+[project.scripts]
+nblog = "nblog.cli:main"
+
+[project.gui-scripts]
+nblog-gui = "nblog.gui:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+nblog = ["web/*.html"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
