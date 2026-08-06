@@ -640,3 +640,146 @@ def test_web_upload_rejects_too_many_files(web_client):
         buf.seek(0)
         files.append(("files", (f"{i}.jpg", buf, "image/jpeg")))
     assert web_client.post("/api/upload", files=files).status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# 업종별 항목 / 참고 글
+# ---------------------------------------------------------------------------
+
+
+def test_field_labels_change_with_category():
+    """업종을 바꾸면 항목 이름이 그 업종 말로 바뀌어야 한다.
+    음식점에 '받은 시술' 을 물으면 도구를 못 쓴다."""
+    from nblog.context import field_specs
+
+    def service_label(category):
+        return next(f["label"] for f in field_specs(category) if f["key"] == "service")
+
+    assert service_label("salon") == "받은 시술"
+    assert service_label("restaurant") == "주문한 메뉴"
+    assert service_label("fitness") == "수강한 수업 · 프로그램"
+    assert service_label("medical") == "받은 진료 · 시술"
+    assert service_label("general") == "이용한 것"
+
+
+def test_every_category_defines_all_fields():
+    """업종별 덮어쓰기가 항목을 빠뜨리거나 추가하지 않아야 한다."""
+    from nblog.context import BASE_FIELDS, CATEGORIES, field_specs
+
+    expected = [key for key, _, _ in BASE_FIELDS]
+    for category in CATEGORIES:
+        specs = field_specs(category)
+        assert [s["key"] for s in specs] == expected, category
+        assert all(s["label"] and s["example"] for s in specs), category
+
+
+def test_context_uses_category_labels_in_prompt():
+    from nblog.context import PostContext
+
+    block = PostContext(category="restaurant", service="김치찜 2인").as_prompt_block()
+    assert "주문한 메뉴: 김치찜 2인" in block
+    assert "음식점" in block
+    assert "받은 시술" not in block
+
+
+def test_context_rejects_unknown_category():
+    from nblog.context import DEFAULT_CATEGORY, PostContext
+
+    assert PostContext.from_dict({"category": "없는업종"}).category == DEFAULT_CATEGORY
+    assert PostContext.from_dict({"category": "salon"}).category == "salon"
+
+
+def test_reference_is_included_but_marked_do_not_copy():
+    """참고 글을 그대로 베끼면 유사문서로 걸러진다. 프롬프트가 그걸 막아야 한다."""
+    from nblog.context import PostContext
+
+    block = PostContext(reference="남의 블로그 글 본문입니다.").as_prompt_block()
+    assert "남의 블로그 글 본문입니다." in block
+    assert "그대로 가져오지 마세요" in block
+
+
+def test_long_reference_is_truncated():
+    """참고 글이 길면 프롬프트를 다 잡아먹으므로 앞부분만 넘긴다."""
+    import re as _re
+
+    from nblog.context import PostContext
+
+    ctx = PostContext(reference="가" * 20_000)
+    block = ctx.as_prompt_block()
+
+    excerpt = _re.search(r"```\n([\s\S]*?)\n```", block).group(1)
+    assert len(excerpt) == ctx.REFERENCE_LIMIT
+    assert "앞 6,000자만" in block
+
+    # 짧으면 잘리지 않고 안내 문구도 없다
+    short = PostContext(reference="짧은 참고 글").as_prompt_block()
+    assert _re.search(r"```\n([\s\S]*?)\n```", short).group(1) == "짧은 참고 글"
+    assert "자만 전달" not in short
+
+
+def test_extract_reference_text_strips_html():
+    from nblog.webapp import extract_reference_text
+
+    raw = (
+        "<html><head><style>.x{color:red}</style><script>var a=1;</script></head>"
+        "<body><h1>제목</h1><p>본문 &amp; 글</p></body></html>"
+    ).encode()
+    text = extract_reference_text(raw, ".html")
+    assert "제목" in text and "본문 & 글" in text
+    assert "<p>" not in text and "var a=1" not in text and "color:red" not in text
+
+
+def test_extract_reference_text_reads_docx():
+    """docx 는 zip 안의 xml 이다. 문단이 줄바꿈으로 남아야 한다."""
+    import io
+    import zipfile as zf
+
+    from nblog.webapp import extract_reference_text
+
+    doc = (
+        '<?xml version="1.0"?>'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        "<w:body>"
+        "<w:p><w:r><w:t>첫 문단</w:t></w:r></w:p>"
+        "<w:p><w:r><w:t>둘째 문단</w:t></w:r></w:p>"
+        "</w:body></w:document>"
+    )
+    buf = io.BytesIO()
+    with zf.ZipFile(buf, "w") as z:
+        z.writestr("word/document.xml", doc)
+    text = extract_reference_text(buf.getvalue(), ".docx")
+    assert "첫 문단" in text and "둘째 문단" in text
+    assert "첫 문단둘째 문단" not in text  # 문단이 붙어버리면 구성이 사라진다
+
+
+def test_extract_reference_text_rejects_broken_docx():
+    from nblog.webapp import extract_reference_text
+
+    with pytest.raises(ValueError):
+        extract_reference_text("이건 zip 이 아닙니다".encode(), ".docx")
+
+
+def test_web_fields_endpoint_matches_context(web_client):
+    """화면이 받는 항목 정의가 서버 정의와 같아야 한다."""
+    from nblog.context import CATEGORIES, field_specs
+
+    data = web_client.get("/api/fields").json()
+    assert {c["key"] for c in data["categories"]} == set(CATEGORIES)
+    for entry in data["categories"]:
+        assert entry["fields"] == field_specs(entry["key"])
+
+
+def test_web_reference_upload(web_client):
+    import io as _io
+
+    res = web_client.post(
+        "/api/reference",
+        files=[
+            ("files", ("a.txt", _io.BytesIO("첫 파일 본문".encode()), "text/plain")),
+            ("files", ("b.exe", _io.BytesIO(b"binary"), "application/octet-stream")),
+        ],
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert "첫 파일 본문" in body["text"]
+    assert any("b.exe" in s for s in body["skipped"])

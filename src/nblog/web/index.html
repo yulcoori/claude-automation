@@ -221,6 +221,18 @@
   .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
   .drop b { display: block; font-size: 13px; margin-bottom: 3px; }
   .drop small { color: var(--faint); font-size: 11.5px; }
+  .drop.small { padding: 15px 14px; }
+
+  /* ---------- 업종 선택 ---------- */
+  .sel {
+    width: 100%; padding: 11px 13px; font: inherit; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    outline: none; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center;
+    padding-right: 34px;
+  }
+  .sel:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
   .thumbs img {
     width: 52px; height: 52px; object-fit: cover; border-radius: 6px;
@@ -406,7 +418,13 @@
     </div>
 
     <div class="card pad" style="margin-top:14px">
-      <div class="step-head"><i class="num">3</i><h2>매장 정보</h2><em>아는 것만</em></div>
+      <div class="step-head"><i class="num">3</i><h2>업종</h2></div>
+      <select id="category" class="sel"></select>
+      <p class="hint">업종을 고르면 아래 항목이 그 업종에 맞게 바뀝니다.</p>
+    </div>
+
+    <div class="card pad" style="margin-top:14px">
+      <div class="step-head"><i class="num">4</i><h2>정보</h2><em>아는 것만</em></div>
       <p class="hint" style="margin:0 0 13px">
         넣은 내용은 본문에 그대로 들어갑니다. 비운 항목은 지어내지 않고 빈칸으로 남깁니다.
       </p>
@@ -422,6 +440,25 @@
         <label for="extra">그 외 하고 싶은 말</label>
         <textarea id="extra" placeholder="글에 꼭 넣고 싶은 내용을 자유롭게 적으세요."></textarea>
       </div>
+    </div>
+
+    <div class="card pad" style="margin-top:14px">
+      <div class="step-head"><i class="num">5</i><h2>참고할 블로그</h2><em>없어도 됩니다</em></div>
+      <p class="hint" style="margin:0 0 12px">
+        마음에 드는 글을 넣으면 <b>말투와 구성</b>을 참고합니다.
+        문장을 베끼지는 않습니다 — 비슷한 글은 네이버가 걸러냅니다.
+      </p>
+
+      <div class="drop small" id="refDrop">
+        <b>글 파일을 끌어다 놓으세요</b>
+        <small>txt · md · html · docx · 또는 눌러서 고르기</small>
+        <input type="file" id="refFiles" accept=".txt,.md,.html,.htm,.docx" multiple class="hide">
+      </div>
+
+      <p class="hint" style="margin:11px 0 5px">또는 글 내용을 직접 붙여넣기</p>
+      <textarea id="reference" placeholder="참고할 블로그 글을 복사해서 붙여넣으세요."
+                style="min-height:96px"></textarea>
+      <p class="hint" id="refInfo"></p>
     </div>
 
     <button class="btn" id="go" style="margin-top:14px">글 만들기</button>
@@ -522,18 +559,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SHOP_FIELDS = [
-  ["shop_name",   "업체명",           "OO헤어"],
-  ["location",    "위치",             "풍암동 월드컵경기장 근처"],
-  ["service",     "받은 시술 / 메뉴", "뿌리매직 + 클리닉"],
-  ["price",       "가격",             "12만원 (클리닉 포함)"],
-  ["duration",    "걸린 시간",        "3시간 30분"],
-  ["hours",       "영업시간",         "10~20시, 화요일 휴무"],
-  ["parking",     "주차",             "지하 2시간 무료"],
-  ["visit_reason","방문 계기",        "아침마다 드라이가 힘들어서"],
-  ["liked",       "좋았던 점",        "상담이 꼼꼼했다"],
-  ["disliked",    "아쉬웠던 점",      "예약 없이 가서 40분 기다렸다"],
-];
+// 항목 정의는 서버에서 받는다. 화면과 프롬프트가 따로 들고 있으면 어긋난다.
+let CATEGORIES = [], FIELD_KEYS = [];
 
 const $ = (s) => document.querySelector(s);
 let sessionId = null, running = false, lastRun = null, lastMd = "", lastHtml = "";
@@ -609,12 +636,32 @@ function renderFinal() {
   $("#output").innerHTML = mdToHtml(lastMd);
 }
 
-// ---------- 매장 정보 입력칸 ----------
-$("#shop").innerHTML = SHOP_FIELDS.map(([id, label, eg]) => `
-  <div class="fld">
-    <label for="f_${id}">${label}</label>
-    <input type="text" id="f_${id}" placeholder="${eg}" autocomplete="off">
-  </div>`).join("");
+// ---------- 업종 · 입력칸 ----------
+function renderFields(categoryKey) {
+  const cat = CATEGORIES.find(c => c.key === categoryKey) || CATEGORIES[0];
+  if (!cat) return;
+  // 업종을 바꿔도 이미 입력한 값은 남겨둔다
+  const kept = {};
+  FIELD_KEYS.forEach(k => { const el = $("#f_" + k); if (el) kept[k] = el.value; });
+
+  FIELD_KEYS = cat.fields.map(f => f.key);
+  $("#shop").innerHTML = cat.fields.map(f => `
+    <div class="fld">
+      <label for="f_${f.key}">${escapeHtml(f.label)}</label>
+      <input type="text" id="f_${f.key}" placeholder="${escapeHtml(f.example)}" autocomplete="off">
+    </div>`).join("");
+  FIELD_KEYS.forEach(k => { if (kept[k]) $("#f_" + k).value = kept[k]; });
+}
+
+fetch("/api/fields").then(r => r.json()).then(d => {
+  CATEGORIES = d.categories;
+  $("#category").innerHTML = CATEGORIES
+    .map(c => `<option value="${c.key}">${escapeHtml(c.label)}</option>`).join("");
+  $("#category").value = d.default;
+  renderFields(d.default);
+});
+
+$("#category").onchange = (e) => renderFields(e.target.value);
 
 // ---------- API 키 상태 ----------
 fetch("/api/status").then(r => r.json()).then(s => {
@@ -669,6 +716,48 @@ async function uploadFiles(files) {
   }
 }
 
+// ---------- 참고할 블로그 첨부 ----------
+const refDrop = $("#refDrop"), refInput = $("#refFiles");
+refDrop.onclick = () => refInput.click();
+refDrop.ondragover = (e) => { e.preventDefault(); refDrop.classList.add("over"); };
+refDrop.ondragleave = () => refDrop.classList.remove("over");
+refDrop.ondrop = (e) => {
+  e.preventDefault(); refDrop.classList.remove("over");
+  if (e.dataTransfer.files.length) uploadReference(e.dataTransfer.files);
+};
+refInput.onchange = () => { if (refInput.files.length) uploadReference(refInput.files); };
+
+async function uploadReference(files) {
+  const form = new FormData();
+  [...files].forEach(f => form.append("files", f, f.name));
+  refDrop.querySelector("b").textContent = "읽는 중...";
+  try {
+    const res = await fetch("/api/reference", { method: "POST", body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "읽기 실패");
+
+    if (data.text) {
+      // 이미 붙여넣은 내용이 있으면 뒤에 잇는다
+      const box = $("#reference");
+      box.value = box.value.trim() ? box.value.trim() + "\n\n---\n\n" + data.text : data.text;
+      refDrop.querySelector("b").textContent = `${[...files].length}개 파일 읽었습니다`;
+      updateRefInfo();
+    } else {
+      refDrop.querySelector("b").textContent = "글 파일을 끌어다 놓으세요";
+    }
+    if (data.skipped?.length) toast("건너뜀: " + data.skipped.join(", "));
+  } catch (err) {
+    refDrop.querySelector("b").textContent = "글 파일을 끌어다 놓으세요";
+    toast(err.message);
+  }
+}
+
+function updateRefInfo() {
+  const n = $("#reference").value.trim().length;
+  $("#refInfo").textContent = n ? `참고 글 ${n.toLocaleString()}자 준비됨` : "";
+}
+$("#reference").addEventListener("input", updateRefInfo);
+
 // ---------- 진행 표시 ----------
 function setStep(n) {
   document.querySelectorAll(".pill").forEach(p => {
@@ -699,9 +788,13 @@ $("#go").onclick = async () => {
   photoNames = []; photoRun = null;
   streaming = true;
 
-  const context = { stance: document.querySelector("input[name=stance]:checked").value,
-                    extra: $("#extra").value.trim() };
-  SHOP_FIELDS.forEach(([id]) => context[id] = $("#f_" + id).value.trim());
+  const context = {
+    stance: document.querySelector("input[name=stance]:checked").value,
+    category: $("#category").value,
+    extra: $("#extra").value.trim(),
+    reference: $("#reference").value.trim(),
+  };
+  FIELD_KEYS.forEach(k => { const el = $("#f_" + k); if (el) context[k] = el.value.trim(); });
 
   const res = await fetch("/api/generate", {
     method: "POST",

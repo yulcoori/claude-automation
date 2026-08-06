@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import html as html_module
 import json
 import shutil
 import uuid
@@ -24,7 +25,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingRes
 
 from .audit import audit
 from .config import Settings
-from .context import PostContext
+from .context import CATEGORIES, DEFAULT_CATEGORY, PostContext, field_specs
 from .draft import DraftResult, build_prompt, stream_draft
 from .images import ImageReport, process_images
 from .render import write_package
@@ -39,6 +40,44 @@ UPLOAD_ROOT = OUT_ROOT / ".uploads"
 # 브라우저가 큰 사진을 그대로 올리므로 상한을 둔다.
 MAX_UPLOAD_BYTES = 30 * 1024 * 1024
 MAX_UPLOAD_FILES = 60
+
+# 참고 글은 텍스트라 훨씬 작다.
+MAX_REFERENCE_BYTES = 2 * 1024 * 1024
+REFERENCE_SUFFIXES = {".txt", ".md", ".html", ".htm", ".docx"}
+
+
+def extract_reference_text(data: bytes, suffix: str) -> str:
+    """첨부 파일에서 본문 텍스트만 뽑는다. 외부 패키지 없이 처리한다."""
+    if suffix == ".docx":
+        # docx 는 zip 안의 word/document.xml 이 본문이다.
+        import io
+        import re as _re
+        import xml.etree.ElementTree as ET
+
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as zf:
+                xml = zf.read("word/document.xml").decode("utf-8", "replace")
+        except (zipfile.BadZipFile, KeyError) as exc:
+            raise ValueError("docx 를 읽을 수 없음") from exc
+        # 문단(w:p)마다 줄바꿈을 넣어야 글 구조가 남는다.
+        xml = _re.sub(r"</w:p>", "</w:p>\n", xml)
+        try:
+            text = "".join(ET.fromstring(xml).itertext())
+        except ET.ParseError as exc:
+            raise ValueError("docx 구조를 해석할 수 없음") from exc
+        return _re.sub(r"\n{3,}", "\n\n", text)
+
+    text = data.decode("utf-8", "replace")
+    if suffix in {".html", ".htm"}:
+        import re as _re
+
+        text = _re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", "", text)
+        text = _re.sub(r"(?i)<(br|/p|/div|/h[1-6]|/li)[^>]*>", "\n", text)
+        text = _re.sub(r"<[^>]+>", "", text)
+        text = html_module.unescape(text)
+        text = _re.sub(r"[ \t]+", " ", text)
+        text = _re.sub(r"\n{3,}", "\n\n", text)
+    return text
 
 
 @dataclass
@@ -88,6 +127,57 @@ def create_app() -> FastAPI:
             "anthropic": settings.has_anthropic,
             "model": settings.anthropic_model if settings.has_anthropic else None,
         }
+
+    @app.get("/api/fields")
+    def field_definitions() -> dict:
+        """업종별 입력 항목. 화면이 이걸 받아 그리므로 이름이 어긋날 일이 없다."""
+        return {
+            "default": DEFAULT_CATEGORY,
+            "categories": [
+                {
+                    "key": key,
+                    "label": meta["label"],
+                    "fields": field_specs(key),
+                }
+                for key, meta in CATEGORIES.items()
+            ],
+        }
+
+    # ---- 참고 글 첨부 ----------------------------------------------------
+    @app.post("/api/reference")
+    async def reference(files: list[UploadFile]) -> dict:
+        """참고할 블로그 글을 파일로 받아 텍스트만 뽑는다."""
+        if not files:
+            raise HTTPException(400, "파일이 없습니다.")
+
+        pieces: list[str] = []
+        skipped: list[str] = []
+        total = 0
+        for upload_file in files:
+            name = Path(upload_file.filename or "첨부").name
+            suffix = Path(name).suffix.lower()
+            if suffix not in REFERENCE_SUFFIXES:
+                skipped.append(f"{name} (지원하지 않는 형식)")
+                continue
+            data = await upload_file.read()
+            total += len(data)
+            if total > MAX_REFERENCE_BYTES:
+                raise HTTPException(
+                    400,
+                    f"참고 글 전체 용량이 {MAX_REFERENCE_BYTES // 1024}KB 를 넘습니다.",
+                )
+            try:
+                text = extract_reference_text(data, suffix)
+            except ValueError as exc:
+                skipped.append(f"{name} ({exc})")
+                continue
+            if text.strip():
+                pieces.append(f"[{name}]\n{text.strip()}")
+            else:
+                skipped.append(f"{name} (읽을 텍스트가 없음)")
+
+        merged = "\n\n---\n\n".join(pieces)
+        return {"text": merged, "chars": len(merged), "skipped": skipped}
 
     # ---- 사진 업로드 ----------------------------------------------------
     @app.post("/api/upload")

@@ -17,7 +17,7 @@ from pathlib import Path
 
 from .audit import audit
 from .config import MissingCredentials, Settings
-from .context import PostContext
+from .context import CATEGORIES, DEFAULT_CATEGORY, PostContext
 from .draft import DraftResult, generate_draft
 from .images import ImageReport, process_images
 from .naver import OpenApiClient, SearchAdClient
@@ -203,6 +203,13 @@ def cmd_build(args: argparse.Namespace) -> int:
     else:
         print(f"\n[2/4] 사진 없음 — `-i ./사진폴더` 로 넘기면 함께 처리합니다.")
 
+    reference_text = ""
+    if args.reference:
+        ref_path = Path(args.reference)
+        if not ref_path.exists():
+            return _err(f"참고 글 파일이 없습니다: {ref_path}")
+        reference_text = ref_path.read_text(encoding="utf-8", errors="replace")
+
     context = PostContext(
         shop_name=args.shop or "",
         location=args.location or "",
@@ -215,6 +222,8 @@ def cmd_build(args: argparse.Namespace) -> int:
         liked=args.liked or "",
         disliked=args.disliked or "",
         extra=args.memo or "",
+        reference=reference_text,
+        category=args.category,
         stance="owner" if args.owner else "customer",
     )
     filled = context.filled()
@@ -364,6 +373,13 @@ def build_parser() -> argparse.ArgumentParser:
     shop.add_argument("--liked", help="좋았던 점")
     shop.add_argument("--disliked", help="아쉬웠던 점")
     shop.add_argument("--memo", help="그 외 하고 싶은 말")
+    shop.add_argument(
+        "--category", default=DEFAULT_CATEGORY, choices=sorted(CATEGORIES),
+        help="업종. 항목 이름이 업종에 맞게 바뀝니다 (기본 general)",
+    )
+    shop.add_argument(
+        "--reference", help="참고할 블로그 글 파일 (txt/md). 말투·구성만 참고합니다",
+    )
     shop.add_argument(
         "--owner", action="store_true", help="업체를 운영하는 사장 입장으로 씁니다 (기본: 손님)"
     )
