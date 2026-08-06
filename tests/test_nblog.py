@@ -1,0 +1,363 @@
+"""네트워크를 타지 않는 부분에 대한 테스트."""
+
+from __future__ import annotations
+
+from datetime import date
+from pathlib import Path
+
+import pytest
+from PIL import Image
+
+from nblog.audit import audit
+from nblog.draft import build_prompt
+from nblog.images import process_images, slugify
+from nblog.naver import BlogPost, KeywordStat, SerpResult, _parse_count, strip_tags
+from nblog.render import _md_to_html, write_package
+from nblog.draft import DraftResult
+from nblog.research import analyze_serp, build_plan
+from nblog.config import Settings
+
+
+TODAY = date(2026, 8, 6)
+
+
+def _serp(titles: list[str], dates: list[str] | None = None) -> SerpResult:
+    dates = dates or ["20260701"] * len(titles)
+    return SerpResult(
+        query="제주도 렌트카",
+        total=1_204_331,
+        posts=[
+            BlogPost(title=t, link="https://blog.naver.com/x/1", description="", blogger="b", postdate=d)
+            for t, d in zip(titles, dates)
+        ],
+    )
+
+
+# ---------------------------------------------------------------------------
+# naver.py
+# ---------------------------------------------------------------------------
+
+
+def test_parse_count_handles_under_ten_string():
+    # 검색광고 API 는 10 미만 검색량을 '< 10' 문자열로 준다
+    assert _parse_count("< 10") == 10
+    assert _parse_count(74200) == 74200
+    assert _parse_count(None) == 0
+    assert _parse_count("1,240") == 1240
+
+
+def test_strip_tags_removes_highlight_and_entities():
+    assert strip_tags("<b>제주도</b> 렌트카 &amp; 보험") == "제주도 렌트카 & 보험"
+
+
+def test_keyword_grade_uses_doc_to_search_ratio():
+    easy = KeywordStat("a", 300, 700, "낮음", 3, blog_docs=400)  # ratio 0.4
+    hard = KeywordStat("b", 300, 700, "높음", 15, blog_docs=90_000)  # ratio 90
+    thin = KeywordStat("c", 10, 20, "낮음", 0, blog_docs=5)
+    assert easy.grade == "매우좋음"
+    assert hard.grade == "매우어려움"
+    assert thin.grade == "검색량부족"
+
+
+# ---------------------------------------------------------------------------
+# research.py
+# ---------------------------------------------------------------------------
+
+
+def test_analyze_serp_extracts_title_patterns():
+    insight = analyze_serp(
+        _serp(
+            [
+                "제주도 렌트카 5곳 비교 후기",
+                "[2026] 제주도 렌트카 가격 총정리",
+                "제주도 렌트카 예약 방법 정리",
+                "여행 준비물 체크리스트",
+            ],
+            ["20260801", "20260715", "20250101", "20240101"],
+        ),
+        "제주도 렌트카",
+        today=TODAY,
+    )
+    assert insight.sample_size == 4
+    assert insight.pct_keyword_in_title == 0.75
+    # 숫자가 있는 건 "5곳" 과 "[2026]" 두 개뿐
+    assert insight.pct_title_has_number == 0.5
+    assert insight.pct_title_has_bracket == 0.25
+    assert insight.pct_title_has_hook == 0.75
+    assert insight.pct_within_90days == 0.5
+    assert insight.median_title_len > 0
+
+
+def test_analyze_serp_survives_empty_results():
+    insight = analyze_serp(SerpResult(query="x", total=0), "x")
+    assert insight.sample_size == 0
+    assert insight.avg_title_len == 0.0
+    assert "누적" in insight.freshness_verdict
+
+
+def test_analyze_serp_ignores_malformed_dates():
+    insight = analyze_serp(_serp(["제주도 렌트카 후기"], ["not-a-date"]), "제주도 렌트카", today=TODAY)
+    assert insight.avg_days_old == 0.0
+    assert insight.pct_within_90days == 0.0
+
+
+def test_build_plan_without_any_keys_still_produces_plan(monkeypatch):
+    monkeypatch.setattr("nblog.research.Settings", Settings)
+    plan = build_plan("제주도 렌트카", Settings())
+    assert plan.main_keyword == "제주도 렌트카"
+    assert plan.recommended_titles
+    assert plan.outline
+    assert plan.target_chars >= 1500
+    # 키가 없으면 그 사실이 notes 에 남아야 한다
+    assert len(plan.notes) == 2
+
+
+def test_plan_keyword_count_stays_in_safe_range():
+    plan = build_plan("제주도 렌트카", Settings())
+    # 키워드 스터핑 방지: 밀도 2% 를 넘길 만큼 많이 권하지 않는다
+    assert 4 <= plan.target_keyword_count <= 10
+
+
+# ---------------------------------------------------------------------------
+# images.py
+# ---------------------------------------------------------------------------
+
+
+def test_slugify_keeps_korean_drops_specials():
+    assert slugify("제주도 렌트카 추천!") == "제주도-렌트카-추천"
+    assert slugify("///") == "image"
+
+
+def _make_image(path: Path, size=(3000, 2000), color=(120, 80, 40)) -> None:
+    Image.new("RGB", size, color).save(path, "JPEG")
+
+
+def test_process_images_resizes_renames_and_flags_duplicates(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_image(src / "a.jpg")
+    _make_image(src / "b.jpg", color=(10, 200, 90))
+    # c 는 a 와 같은 사진 (크기만 다름) → 중복으로 잡혀야 한다
+    Image.new("RGB", (1000, 667), (120, 80, 40)).save(src / "c.jpg", "JPEG")
+
+    report = process_images([src], tmp_path / "out", keyword="제주도 렌트카", max_width=1600)
+
+    assert len(report.images) == 3
+    assert [i.output.name for i in report.images] == [
+        "제주도-렌트카-01.jpg",
+        "제주도-렌트카-02.jpg",
+        "제주도-렌트카-03.jpg",
+    ]
+    assert all(i.width <= 1600 and i.height <= 1600 for i in report.images)
+    assert report.images[2].duplicate_of == 1
+    assert any("중복" in w for w in report.warnings)
+
+
+def test_distinct_flat_images_are_not_duplicates(tmp_path):
+    """단색 사진들은 밝기 변화가 없어 average hash 로는 전부 같게 나온다.
+    색상까지 봐야 구분된다 — 이게 안 되면 정상 사진을 중복으로 오판한다."""
+    src = tmp_path / "src"
+    src.mkdir()
+    for i, color in enumerate(
+        [(200, 120, 60), (60, 140, 200), (90, 200, 120), (220, 200, 80)], 1
+    ):
+        Image.new("RGB", (1200, 900), color).save(src / f"IMG_{i}.jpg", "JPEG")
+
+    report = process_images([src], tmp_path / "out", keyword="k")
+    assert len(report.images) == 4
+    assert report.duplicates == []
+    assert not any("중복" in w for w in report.warnings)
+
+
+def test_same_photo_recompressed_is_detected_as_duplicate(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    # 사진처럼 밝기 변화가 있는 이미지를 만든다
+    base = Image.new("RGB", (900, 600))
+    base.putdata([((x * 7) % 256, (y * 5) % 256, (x + y) % 256) for y in range(600) for x in range(900)])
+    base.save(src / "a.jpg", "JPEG", quality=95)
+    base.resize((450, 300)).save(src / "b.jpg", "JPEG", quality=70)
+
+    report = process_images([src], tmp_path / "out", keyword="k")
+    assert report.images[1].duplicate_of == 1
+
+
+def test_process_images_strips_exif(tmp_path):
+    src = tmp_path / "p.jpg"
+    _make_image(src, size=(800, 600))
+    report = process_images([src], tmp_path / "out", keyword="k")
+    with Image.open(report.images[0].output) as out:
+        assert not out.getexif()
+
+
+def test_process_images_reports_unreadable_paths(tmp_path):
+    report = process_images([tmp_path / "없는폴더"], tmp_path / "out")
+    assert report.skipped
+    assert not report.images
+
+
+def test_process_images_preserves_alpha_as_png(tmp_path):
+    src = tmp_path / "logo.png"
+    Image.new("RGBA", (500, 500), (0, 0, 0, 0)).save(src)
+    report = process_images([src], tmp_path / "out", keyword="k")
+    assert report.images[0].output.suffix == ".png"
+
+
+# ---------------------------------------------------------------------------
+# audit.py
+# ---------------------------------------------------------------------------
+
+
+def _plan():
+    return build_plan("제주도 렌트카", Settings())
+
+
+def test_audit_blocks_on_unfilled_placeholders():
+    plan = _plan()
+    md = "# 제주도 렌트카 후기\n\n" + ("제주도 렌트카를 빌렸습니다. " * 60) + "\n\n{{직접 채우기: 가격}}"
+    report = audit(md, plan)
+    assert not report.publishable
+    assert any(c.label == "미완성 자리 남음" for c in report.errors)
+
+
+def test_audit_flags_keyword_stuffing():
+    plan = _plan()
+    md = "# 제주도 렌트카\n\n" + ("제주도 렌트카 " * 200)
+    report = audit(md, plan)
+    assert report.keyword_density > 2.5
+    assert any("스터핑" in c.label for c in report.errors)
+
+
+def test_audit_flags_short_post():
+    report = audit("# 제주도 렌트카\n\n짧은 글입니다.\n\n[사진1]", _plan())
+    assert any(c.label == "분량 부족" for c in report.errors)
+
+
+def test_audit_passes_a_reasonable_post():
+    """설계안이 권하는 그대로 쓴 글은 검사를 통과해야 한다.
+
+    planner 가 권하는 키워드 횟수를 audit 이 스터핑으로 잡으면 도구가 자기모순이 된다."""
+    plan = _plan()
+    # 목표 분량을 넉넉히 넘기고, 키워드는 소제목(outline)에 이미 들어간 만큼만 둔다
+    filler = "제주도 여행 준비를 하면서 실제로 확인한 내용을 순서대로 정리해봤습니다. "
+    body = "\n\n".join(f"## {section}\n\n" + filler * 12 for section in plan.outline)
+    md = (
+        "# 제주도 렌트카 고를 때 확인한 5가지\n\n"
+        + body
+        + "\n\n"
+        + "\n\n".join(f"[사진{i}]" for i in range(1, plan.target_images + 1))
+    )
+    # 설계안이 권한 횟수에 정확히 맞춘다 (소제목에 이미 들어간 만큼을 빼고 보충)
+    shortfall = plan.target_keyword_count - md.replace(" ", "").count("제주도렌트카")
+    md += "\n\n" + "제주도 렌트카 예약 이야기를 덧붙입니다.\n\n" * max(0, shortfall)
+
+    report = audit(md, plan)
+    assert report.publishable, [f"{c.label}: {c.detail}" for c in report.errors]
+    assert report.char_count >= plan.target_chars
+    # 설계안이 권한 횟수를 그대로 넣었을 때 밀도가 경고선 아래여야 한다
+    assert report.keyword_count >= plan.target_keyword_count
+    assert report.keyword_density <= 2.0
+
+
+def test_audit_flags_risky_claims_and_missing_disclosure():
+    plan = _plan()
+    md = (
+        "# 제주도 렌트카 후기\n\n"
+        + "이 업체는 100% 보장 최저가 보장입니다. " * 5
+        + "제주도 렌트카를 협찬받아 이용했습니다. " * 5
+        + "제주도 렌트카 이야기입니다. " * 40
+        + "\n\n[사진1]"
+    )
+    report = audit(md, plan)
+    labels = [c.label for c in report.checks]
+    assert "과장·단정 표현" in labels
+    assert "협찬 표기 확인 필요" in labels
+
+
+def test_audit_ignores_code_blocks_when_counting():
+    plan = _plan()
+    md = "# 제주도 렌트카\n\n```\n제주도 렌트카 제주도 렌트카 제주도 렌트카\n```\n\n짧은 본문."
+    report = audit(md, plan)
+    # 코드블록 안의 키워드는 세지 않는다
+    assert report.keyword_count == 1
+
+
+# ---------------------------------------------------------------------------
+# draft.py / render.py
+# ---------------------------------------------------------------------------
+
+
+def test_build_prompt_includes_limits_and_outline():
+    plan = _plan()
+    prompt = build_prompt(plan)
+    assert plan.main_keyword in prompt
+    assert f"{plan.target_keyword_count}회" in prompt
+    assert str(plan.target_chars) in prompt
+    assert plan.outline[0] in prompt
+
+
+def test_md_to_html_converts_photo_slots(tmp_path):
+    src = tmp_path / "a.jpg"
+    _make_image(src, size=(600, 400))
+    images = process_images([src], tmp_path / "out", keyword="제주도")
+    html_out = _md_to_html("# 제목\n\n## 소제목\n\n본문입니다.\n\n[사진1] 렌트카 외관", images)
+    assert "<h2>제목</h2>" in html_out
+    assert "<h3>소제목</h3>" in html_out
+    assert "제주도-01.jpg" in html_out
+    assert "렌트카 외관" in html_out
+
+
+def test_md_to_html_escapes_html_in_body():
+    out = _md_to_html("본문에 <script>alert(1)</script> 가 있습니다.", None)
+    assert "<script>" not in out
+    assert "&lt;script&gt;" in out
+
+
+def test_write_package_creates_all_files(tmp_path):
+    plan = _plan()
+    md = "# 제주도 렌트카\n\n## 소제목\n\n본문입니다.\n\n[사진1]"
+    draft = DraftResult(markdown=md, prompt="프롬프트", generated_by="prompt-only")
+    report = audit(md, plan)
+    package = write_package(tmp_path, plan, draft, None, report, today=TODAY)
+
+    names = {p.name for p in package.files}
+    assert {"post.md", "post.html", "checklist.md", "prompt.md", "plan.json", "guide.md"} <= names
+    assert package.root.name == "제주도-렌트카-2026-08-06"
+    assert "발행 전 체크리스트" in (package.root / "checklist.md").read_text(encoding="utf-8")
+
+
+def test_plan_json_roundtrips(tmp_path):
+    """audit 서브커맨드가 plan.json 을 다시 읽을 수 있어야 한다."""
+    import json
+
+    from nblog.research import PostPlan, SerpInsight
+
+    plan = _plan()
+    raw = json.loads(json.dumps(plan.to_dict(), ensure_ascii=False))
+    insight = SerpInsight(**raw.pop("insight"))
+    restored = PostPlan(insight=insight, **raw)
+    assert restored.main_keyword == plan.main_keyword
+    assert restored.target_keyword_count == plan.target_keyword_count
+
+
+# ---------------------------------------------------------------------------
+# cli.py — 발행 기능이 없다는 것 자체를 테스트로 고정
+# ---------------------------------------------------------------------------
+
+
+def test_cli_exposes_no_publish_command():
+    from nblog.cli import build_parser
+
+    parser = build_parser()
+    actions = [a for a in parser._actions if hasattr(a, "choices") and a.choices]
+    commands = set(actions[0].choices) if actions else set()
+    assert commands == {"build", "keyword", "serp", "images", "plan", "audit"}
+    for banned in ("publish", "post", "upload", "login"):
+        assert banned not in commands
+
+
+def test_no_browser_automation_dependency():
+    """selenium/playwright 계열이 들어오면 이 테스트가 깨지도록 둔다."""
+    text = Path("requirements.txt").read_text(encoding="utf-8").lower()
+    for banned in ("selenium", "playwright", "puppeteer", "undetected", "pyautogui"):
+        assert banned not in text
