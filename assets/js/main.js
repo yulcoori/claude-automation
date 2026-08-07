@@ -129,3 +129,23 @@ if (heroSlides.length > 1 && heroDots) {
   }
   restart();
 }
+
+// Load the embedded map only if Google is actually reachable, so the
+// address fallback stays visible on offline/blocked networks instead of
+// being covered by a broken frame.
+const mapFrame = document.getElementById('mapFrame');
+if (mapFrame && mapFrame.dataset.src) {
+  const probe = new Image();
+  let settled = false;
+  const ok = () => {
+    if (settled) return;
+    settled = true;
+    mapFrame.src = mapFrame.dataset.src;
+    mapFrame.classList.add('ready');
+  };
+  const fail = () => { settled = true; };
+  probe.onload = ok;
+  probe.onerror = fail;
+  setTimeout(fail, 4000);
+  probe.src = 'https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png?_=' + Date.now();
+}
