@@ -149,3 +149,59 @@ if (mapFrame && mapFrame.dataset.src) {
   setTimeout(fail, 4000);
   probe.src = 'https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png?_=' + Date.now();
 }
+
+// Notice popup on first visit (with "hide for today" preference)
+const popup = document.getElementById('noticePopup');
+if (popup) {
+  const STORE_KEY = 'sls_notice_hidden_until';
+  const todayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const readPref = () => {
+    try { return localStorage.getItem(STORE_KEY); } catch (e) { return null; }
+  };
+  const writePref = (v) => {
+    try { localStorage.setItem(STORE_KEY, v); } catch (e) { /* private mode */ }
+  };
+
+  const todayBox = document.getElementById('popupToday');
+  let lastFocus = null;
+
+  const openPopup = () => {
+    lastFocus = document.activeElement;
+    popup.hidden = false;
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => popup.classList.add('show'));
+    const closeBtn = document.getElementById('popupClose');
+    if (closeBtn) closeBtn.focus({ preventScroll: true });
+    document.addEventListener('keydown', onKey);
+  };
+
+  const closePopup = () => {
+    if (todayBox && todayBox.checked) writePref(todayKey());
+    popup.classList.remove('show');
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', onKey);
+    const done = () => { popup.hidden = true; };
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) done();
+    else setTimeout(done, 260);
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus({ preventScroll: true });
+  };
+
+  function onKey(e) {
+    if (e.key === 'Escape') closePopup();
+  }
+
+  ['popupClose', 'popupClose2', 'popupGo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', closePopup);
+  });
+  popup.addEventListener('click', (e) => {
+    if (e.target === popup) closePopup();
+  });
+
+  if (readPref() !== todayKey()) {
+    setTimeout(openPopup, 600);
+  }
+}

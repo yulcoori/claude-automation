@@ -841,6 +841,47 @@
   </div>
 </footer>
 
+<!-- NOTICE POPUP -->
+<div class="popup-overlay" id="noticePopup" role="dialog" aria-modal="true" aria-labelledby="popupTitle" hidden>
+  <div class="popup-card">
+    <div class="popup-head">
+      <span class="popup-tag">NOTICE</span>
+      <h3 id="popupTitle">㈜서린사이언스 소식</h3>
+      <button type="button" class="popup-x" id="popupClose" aria-label="팝업 닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="popup-body">
+      <p class="popup-lead">최신 공지 및 이벤트 안내입니다.</p>
+      <ul class="popup-list">
+        <li>
+          <span class="pl-badge new">NEW</span>
+          <div><b>홈페이지를 새롭게 오픈합니다</b><span>고객 여러분께 더 유용한 정보를 전해드리겠습니다.</span></div>
+        </li>
+        <li>
+          <span class="pl-badge">공지</span>
+          <div><b>Cell Lysis 관련 제품 안내</b><span>RIPA Buffer 등 세포용해 제품을 안내드립니다.</span></div>
+        </li>
+        <li>
+          <span class="pl-badge">공지</span>
+          <div><b>Western Blot 교육자료 안내</b><span>실험에 참고하실 수 있는 자료를 제공합니다.</span></div>
+        </li>
+      </ul>
+      <a href="#community" class="btn btn-primary popup-cta" id="popupGo">공지사항 전체 보기
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <div class="popup-foot">
+      <label class="popup-today">
+        <input type="checkbox" id="popupToday"> 오늘 하루 열지 않기
+      </label>
+      <button type="button" class="popup-close-txt" id="popupClose2">닫기</button>
+    </div>
+  </div>
+</div>
+
 <div class="quick-menu" id="quickMenu">
   <div class="qm-head">QUICK<br>MENU</div>
   <a class="qm-item" href="tel:01024702771">
