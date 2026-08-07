@@ -464,6 +464,28 @@ a.tab-btn.active:hover{color:#fff;border-color:var(--navy-950)}
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
 }
 
+/* ===== Group / Affiliates ===== */
+.group-grid{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:20px}
+.group-col{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-md);
+  padding:26px 24px;
+}
+.group-col h4{
+  font-size:15px;font-weight:800;color:var(--navy-900);margin-bottom:14px;
+  padding-bottom:12px;border-bottom:1px solid var(--line);letter-spacing:-.01em;
+}
+.group-col li{font-size:14px;color:var(--slate-600);padding:7px 0}
+.group-col li a{color:var(--navy-800);font-weight:700;transition:color .2s}
+.group-col li a:hover{color:var(--accent-500)}
+.group-col li a span{font-size:11px;color:var(--accent-500);margin-left:3px}
+.group-shop{
+  background:linear-gradient(150deg,var(--navy-950),var(--navy-800));
+  border-color:transparent;display:flex;flex-direction:column;
+}
+.group-shop h4{color:#fff;border-bottom-color:rgba(255,255,255,.14)}
+.group-shop p{font-size:13.5px;color:#aab4d4;line-height:1.6;margin-bottom:auto;padding-bottom:18px}
+.group-shop .btn{align-self:flex-start}
+
 /* ===== FAQ / Community 2col ===== */
 .split-2{display:grid;grid-template-columns:1fr 1fr;gap:64px}
 .accordion-item{border-bottom:1px solid var(--line)}
@@ -614,6 +636,7 @@ a.tab-btn.active:hover{color:#fff;border-color:var(--navy-950)}
   .card-grid4{grid-template-columns:repeat(2,1fr)}
   .card-grid3{grid-template-columns:repeat(2,1fr)}
   .brand-grid{grid-template-columns:repeat(2,1fr)}
+  .group-grid{grid-template-columns:1fr 1fr}
   .partner-grid{grid-template-columns:repeat(3,1fr)}
   .product-grid{grid-template-columns:repeat(2,1fr)}
   .about-grid{grid-template-columns:1fr;gap:44px}
@@ -642,6 +665,7 @@ a.tab-btn.active:hover{color:#fff;border-color:var(--navy-950)}
   .card-grid4{grid-template-columns:1fr}
   .card-grid3{grid-template-columns:1fr}
   .brand-grid{grid-template-columns:1fr}
+  .group-grid{grid-template-columns:1fr}
   .partner-grid{grid-template-columns:repeat(2,1fr)}
   .product-grid{grid-template-columns:1fr}
   .timeline::before{left:14px}
