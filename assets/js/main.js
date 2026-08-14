@@ -98,38 +98,6 @@ if (statEls.length) {
   statEls.forEach(el => statIO.observe(el));
 }
 
-// Hero slideshow
-const heroSlides = document.querySelectorAll('.hero-slide');
-const heroDots = document.getElementById('heroDots');
-if (heroSlides.length > 1 && heroDots) {
-  let idx = 0;
-  let timer = null;
-
-  heroSlides.forEach((_, i) => {
-    const dot = document.createElement('button');
-    dot.type = 'button';
-    dot.setAttribute('aria-label', `${i + 1}번 슬라이드 보기`);
-    if (i === 0) dot.classList.add('on');
-    dot.addEventListener('click', () => { show(i); restart(); });
-    heroDots.appendChild(dot);
-  });
-  const dots = heroDots.querySelectorAll('button');
-
-  function show(n) {
-    idx = n;
-    heroSlides.forEach((s, i) => s.classList.toggle('is-active', i === n));
-    dots.forEach((d, i) => d.classList.toggle('on', i === n));
-  }
-  function next() { show((idx + 1) % heroSlides.length); }
-  function restart() {
-    clearInterval(timer);
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      timer = setInterval(next, 5000);
-    }
-  }
-  restart();
-}
-
 // Load the embedded map only if Google is actually reachable, so the
 // address fallback stays visible on offline/blocked networks instead of
 // being covered by a broken frame.
