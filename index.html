@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모모필라테스</title>
+<meta name="description" content="필라테스를, 처방합니다. 모모필라테스는 체형 분석으로 몸의 상태를 읽고, 그 몸에 필요한 움직임만 1:1로 처방하는 광주 상무의 기구 필라테스 스튜디오입니다.">
+<meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#191614" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="모모필라테스">
+<meta property="og:title" content="모모필라테스 — 필라테스를, 처방합니다">
+<meta property="og:description" content="체형 분석으로 시작해 1:1로 끝냅니다. 광주 상무 기구 필라테스.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='none' stroke='%23cc785c' stroke-width='3' stroke-linecap='round' d='M16 3v3c-9 2-9 7 0 9s9 7 0 9v5'/%3E%3C/svg%3E">
+<link rel="preload" href="assets/fonts/pretendard-var-ksx1001.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<a class="u-skip" href="#main">본문으로 건너뛰기</a>
+
+<header class="nav" id="nav">
+  <div class="shell nav__inner">
+    <a class="nav__brand" href="#top">
+      모모필라테스
+      <span class="nav__brand-en">Momo Pilates</span>
+    </a>
+    <nav class="nav__links" aria-label="주요 메뉴">
+      <a href="#signs">이런 신호</a>
+      <a href="#diagnosis">진단</a>
+      <a href="#prescription">처방</a>
+      <a href="#pricing">이용 안내</a>
+      <a href="#visit">오시는 길</a>
+    </nav>
+    <a class="nav__cta" href="#contact">체형 분석 예약</a>
+    <button class="nav__toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="navPanel">
+      <span></span>
+      <span class="u-hidden">메뉴 열기</span>
+    </button>
+  </div>
+  <div class="nav__panel" id="navPanel">
+    <div class="nav__panel-inner">
+      <div class="shell">
+        <ul>
+          <li><a href="#signs">이런 신호</a></li>
+          <li><a href="#diagnosis">진단</a></li>
+          <li><a href="#prescription">처방</a></li>
+          <li><a href="#teacher">원장 소개</a></li>
+          <li><a href="#pricing">이용 안내</a></li>
+          <li><a href="#visit">오시는 길</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ------------------------------------------------------------ hero -->
+  <section class="hero" id="top">
+    <div class="shell hero__grid">
+      <div class="hero__copy">
+        <p class="hero__slogan">We <b>prescribe</b> Pilates.</p>
+        <h1 class="hero__title">통증을 참는 대신,<br>몸에 맞는 <mark>움직임을 처방</mark>받으세요</h1>
+        <p class="lede">모모필라테스는 수업이 아니라 진단에서 시작합니다. 지금 몸이 어떤 상태인지 먼저 읽고, 그 몸에 필요한 움직임만 골라 1:1로 처방합니다.</p>
+        <div class="hero__actions">
+          <a class="btn btn--solid" href="#contact">체형 분석 예약하기 <span class="btn__arrow" aria-hidden="true">→</span></a>
+          <a class="btn btn--line" href="#prescription">처방 프로그램 보기</a>
+        </div>
+        <p class="hero__meta">
+          <span>광주 <b>상무</b></span>
+          <span><b>1:1</b> 개인 레슨</span>
+          <span><b>기구</b> 필라테스</span>
+          <span><b>4주</b>마다 재평가</span>
+        </p>
+      </div>
+
+      <figure class="spine hero__figure" id="spineFigure">
+        <div class="spine__stage">
+          <svg class="spine__svg" id="spineSvg" viewBox="0 0 240 520" role="img"
+               aria-label="구부정한 자세에서 중립 정렬로 펴지는 척추 다이어그램. 목과 허리의 통증 지점이 함께 사라집니다.">
+            <line class="spine__plumb" x1="118" y1="24" x2="118" y2="500"></line>
+            <g id="spineParts"></g>
+          </svg>
+        </div>
+        <figcaption class="spine__caption">
+          <span class="spine__state" id="spineState">구부정한 자세</span>
+          <button class="spine__replay" type="button" id="spineReplay">다시 보기</button>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- signs -->
+  <section class="section" id="signs">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Signs</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">이런 신호</p>
+          <h2 class="section__title">이 중 두 개 이상이라면, 운동보다 진단이 먼저입니다</h2>
+        </div>
+        <ul class="symptoms reveal">
+          <li>아침에 일어나면 허리가 뻣뻣해 한참을 움직여야 풀린다</li>
+          <li>30분만 앉아 있어도 목과 어깨가 무겁게 눌린다</li>
+          <li>옆에서 찍힌 사진 속 내 자세가 낯설고 구부정하다</li>
+          <li>병원에서는 “특별한 이상은 없다”는 말을 들었다</li>
+          <li>마사지를 받으면 그때뿐, 며칠이면 그대로 돌아온다</li>
+          <li>운동을 시작하면 오히려 통증이 심해져 그만두게 된다</li>
+        </ul>
+        <p class="symptoms__note reveal">통증은 대개 아픈 그 자리만의 문제가 아니라, 몸 전체가 움직여 온 방식의 결과입니다. 그래서 어디가 아픈지보다 왜 아픈지를 먼저 봅니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- creed -->
+  <section class="creed" id="creed">
+    <div class="shell creed__inner">
+      <p class="creed__quote">We <b>prescribe</b> Pilates.</p>
+      <p class="creed__kr">필라테스를, <b>처방</b>합니다</p>
+
+      <div class="creed__rule" aria-hidden="true"></div>
+
+      <p class="creed__statement">모모필라테스는<br>몸에 필요한 움직임을 <b>‘처방’</b>합니다.</p>
+
+      <div class="creed__pair">
+        <div class="creed__card">
+          <h3>Diagnosis</h3>
+          <p>지금 내 몸의 상태를<br>정확히 읽는 데서 시작합니다</p>
+        </div>
+        <div class="creed__card creed__card--rx">
+          <h3>Prescription</h3>
+          <p>몸에 딱 맞는 운동을,<br>책임지고 처방합니다</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------- diagnosis -->
+  <section class="section section--sunk" id="diagnosis">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Diagnosis</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">진단</p>
+          <h2 class="section__title">처방 전에, 네 단계로 몸을 읽습니다</h2>
+          <p class="lede">첫 수업부터 기구에 올라가지 않습니다. 무엇이 통증을 만들고 있는지 확인한 다음에야 움직임을 정합니다.</p>
+        </div>
+        <ol class="process reveal">
+          <li class="process__step">
+            <p class="process__n">01</p>
+            <h3 class="process__title">체형 분석</h3>
+            <p class="process__time">40 min</p>
+            <p class="process__desc">선 자세와 걷는 자세, 관절이 움직이는 범위, 통증이 나타나는 동작을 순서대로 확인합니다.</p>
+          </li>
+          <li class="process__step">
+            <p class="process__n">02</p>
+            <h3 class="process__title">원인 상담</h3>
+            <p class="process__time">20 min</p>
+            <p class="process__desc">분석 결과를 함께 보면서 통증의 원인과 목표, 가능한 운동 빈도를 정리합니다.</p>
+          </li>
+          <li class="process__step">
+            <p class="process__n">03</p>
+            <h3 class="process__title">처방 수업</h3>
+            <p class="process__time">50 min</p>
+            <p class="process__desc">정해진 루틴을 따르지 않고, 그날의 몸 상태에 맞춰 강도와 동작을 조정하며 1:1로 진행합니다.</p>
+          </li>
+          <li class="process__step">
+            <p class="process__n">04</p>
+            <h3 class="process__title">재평가</h3>
+            <p class="process__time">4 weeks</p>
+            <p class="process__desc">4주마다 처음 분석과 나란히 비교합니다. 달라진 만큼 처방도 다시 씁니다.</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------- prescription -->
+  <section class="section" id="prescription">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Prescription</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">처방</p>
+          <h2 class="section__title">세 가지 처방, 몸 상태에 따라 정해집니다</h2>
+          <p class="lede">아래는 기준이 되는 처방입니다. 실제 강도와 기간은 체형 분석 결과에 따라 조정됩니다. 저항은 기구에 거는 스프링 수로 표시했습니다.</p>
+        </div>
+
+        <div class="rxs reveal">
+
+          <article class="rx">
+            <div class="rx__main">
+              <div class="rx__head">
+                <p class="rx__no">Rx <span class="num">01</span></p>
+                <h3 class="rx__name">통증 완화</h3>
+              </div>
+              <dl class="rx__rows">
+                <div class="rx__row"><dt>진단</dt><dd>목·허리에 통증이 있고, 특정 방향으로 움직이기 어려운 상태</dd></div>
+                <div class="rx__row"><dt>처방</dt><dd>아프지 않은 범위를 먼저 넓힙니다. 스프링이 체중을 받아 주는 만큼 관절 부담 없이 움직임을 회복합니다.</dd></div>
+                <div class="rx__row rx__row--dose"><dt>용법</dt><dd>주 2회 · 50분 · 8주</dd></div>
+              </dl>
+            </div>
+            <div class="springs">
+              <div class="springs__row" aria-hidden="true">
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil springs__coil--off" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil springs__coil--off" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+              </div>
+              <p class="springs__label">스프링 1 · 가벼움</p>
+            </div>
+          </article>
+
+          <article class="rx">
+            <div class="rx__main">
+              <div class="rx__head">
+                <p class="rx__no">Rx <span class="num">02</span></p>
+                <h3 class="rx__name">체형 교정</h3>
+              </div>
+              <dl class="rx__rows">
+                <div class="rx__row"><dt>진단</dt><dd>거북목, 말린 어깨, 골반 비대칭 — 통증보다 자세가 먼저 눈에 띄는 상태</dd></div>
+                <div class="rx__row"><dt>처방</dt><dd>짧아져 굳은 곳은 늘리고, 쓰지 않아 약해진 곳은 다시 깨웁니다. 좌우 차이를 줄이는 데 초점을 둡니다.</dd></div>
+                <div class="rx__row rx__row--dose"><dt>용법</dt><dd>주 2회 · 50분 · 12주</dd></div>
+              </dl>
+            </div>
+            <div class="springs">
+              <div class="springs__row" aria-hidden="true">
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil springs__coil--off" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+              </div>
+              <p class="springs__label">스프링 2 · 보통</p>
+            </div>
+          </article>
+
+          <article class="rx">
+            <div class="rx__main">
+              <div class="rx__head">
+                <p class="rx__no">Rx <span class="num">03</span></p>
+                <h3 class="rx__name">기능 강화</h3>
+              </div>
+              <dl class="rx__rows">
+                <div class="rx__row"><dt>진단</dt><dd>통증은 줄었지만 무리하면 다시 돌아오는, 재발이 반복되는 상태</dd></div>
+                <div class="rx__row"><dt>처방</dt><dd>일상과 운동으로 돌아가기 위한 근력과 안정성을 쌓습니다. 통증이 다시 오지 않는 몸을 목표로 합니다.</dd></div>
+                <div class="rx__row rx__row--dose"><dt>용법</dt><dd>주 2~3회 · 50분 · 12주</dd></div>
+              </dl>
+            </div>
+            <div class="springs">
+              <div class="springs__row" aria-hidden="true">
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+                <svg width="14" height="34" viewBox="0 0 14 34"><path class="springs__coil" d="M7 2v2.5C1.5 5.5 1.5 9 7 10s5.5 4.5 0 5.5S1.5 20 7 21s5.5 4.5 0 5.5V29"/></svg>
+              </div>
+              <p class="springs__label">스프링 3 · 강함</p>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- teacher -->
+  <section class="section section--sunk" id="teacher">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Director</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">원장 소개</p>
+          <h2 class="section__title">처방을 쓰는 사람</h2>
+        </div>
+        <div class="teacher reveal">
+          <div class="teacher__portrait">원장 사진 자리<br>(4:5 비율 이미지)</div>
+          <div class="teacher__body">
+            <h3 class="teacher__name">
+              ○○○
+              <span class="teacher__role">Director</span>
+            </h3>
+            <blockquote class="teacher__quote">“아픈 곳을 피해 다니는 운동은 오래가지 않습니다. 아플 수밖에 없었던 이유를 바꿔야 합니다.”</blockquote>
+            <ul class="teacher__creds">
+              <li>보유 자격 ①을 입력하세요</li>
+              <li>보유 자격 ②를 입력하세요</li>
+              <li>경력 사항을 입력하세요</li>
+              <li>지도 이력을 입력하세요</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- pricing -->
+  <section class="section" id="pricing">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Fees</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">이용 안내</p>
+          <h2 class="section__title">수업료</h2>
+          <p class="lede">모든 수업은 체형 분석을 마친 뒤 시작합니다. 처음 오신 분은 분석과 체험을 함께 진행합니다.</p>
+        </div>
+
+        <div class="pricing__wrap reveal">
+          <table class="pricing">
+            <caption class="u-hidden">프로그램별 회차당 수업료</caption>
+            <thead>
+              <tr>
+                <th scope="col">프로그램</th>
+                <th scope="col">10회</th>
+                <th scope="col">20회</th>
+                <th scope="col">30회</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">1:1 개인 레슨</th>
+                <td>700,000</td>
+                <td>1,300,000</td>
+                <td>1,800,000</td>
+              </tr>
+              <tr>
+                <th scope="row">1:2 듀엣 레슨</th>
+                <td>450,000</td>
+                <td>840,000</td>
+                <td>1,200,000</td>
+              </tr>
+              <tr>
+                <th scope="row">3~5인 그룹 레슨</th>
+                <td>300,000</td>
+                <td>560,000</td>
+                <td>780,000</td>
+              </tr>
+              <tr>
+                <th scope="row">체형 분석 + 체험 <span class="num">1</span>회</th>
+                <td>30,000</td>
+                <td>—</td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ul class="notes">
+          <li>표시 금액은 원(₩) 단위이며 부가세가 포함되어 있습니다.</li>
+          <li>등록 후 체형 분석 비용은 수업료에서 차감해 드립니다.</li>
+          <li>수업은 예약제로 운영되며, 변경은 수업 24시간 전까지 가능합니다.</li>
+          <li>실제 금액과 정책은 스튜디오 기준에 맞게 수정해서 사용하세요.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------- faq -->
+  <section class="section section--sunk" id="faq">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Questions</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">자주 묻는 질문</p>
+          <h2 class="section__title">처음이라면 이런 게 궁금하실 거예요</h2>
+        </div>
+        <div class="faq reveal">
+          <details class="faq__item">
+            <summary class="faq__q">운동을 한 번도 안 해봤는데 괜찮을까요?</summary>
+            <p class="faq__a">괜찮습니다. 기구 필라테스는 스프링이 체중의 일부를 대신 받아 주기 때문에, 맨몸 운동보다 오히려 부담이 적습니다. 첫 수업은 자세를 확인하고 호흡을 맞추는 것부터 시작합니다.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">지금 통증이 있는데 운동해도 되나요?</summary>
+            <p class="faq__a">통증이 있는 상태라면 더더욱 진단이 먼저입니다. 체형 분석에서 통증이 나타나는 동작을 먼저 찾고, 그 동작을 피한 범위 안에서 수업을 구성합니다. 다만 진단이나 치료가 필요한 상태로 판단되면 병원 진료를 먼저 권해 드립니다.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">얼마나 다녀야 효과를 느낄 수 있나요?</summary>
+            <p class="faq__a">주 2회 기준으로 4주 차에 첫 재평가를 합니다. 뻣뻣함이나 움직임의 편안함은 보통 이 시점에 먼저 달라지고, 자세와 근력의 변화는 8~12주에 걸쳐 나타납니다.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">그룹 수업과 1:1 중 무엇이 맞을까요?</summary>
+            <p class="faq__a">통증이 있거나 좌우 차이가 뚜렷하다면 1:1을 권해 드립니다. 동작마다 조정이 필요하기 때문입니다. 체형 분석 상담에서 현재 상태에 맞는 쪽을 함께 정합니다.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">준비물이 있나요?</summary>
+            <p class="faq__a">몸에 붙는 편한 운동복과 미끄럼 방지 양말이면 충분합니다. 양말은 스튜디오에서도 구매하실 수 있습니다.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- visit -->
+  <section class="section" id="visit">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Visit</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">오시는 길</p>
+          <h2 class="section__title">광주 상무, 모모필라테스</h2>
+        </div>
+        <div class="visit reveal">
+          <div class="visit__block">
+            <p class="visit__label">Address</p>
+            <p class="visit__value">광주광역시 서구 ○○로 00, 0층</p>
+            <p class="visit__note">상무역 0번 출구에서 도보 0분 · 건물 주차장 이용 가능</p>
+          </div>
+          <div class="visit__block">
+            <p class="visit__label">Hours</p>
+            <ul class="hours">
+              <li><span>월–금</span><span>07:00 – 22:00</span></li>
+              <li><span>토</span><span>09:00 – 15:00</span></li>
+              <li><span>일 · 공휴일</span><span>휴무</span></li>
+            </ul>
+          </div>
+          <div class="visit__block">
+            <p class="visit__label">Contact</p>
+            <p class="visit__value"><a href="tel:0000000000">000-0000-0000</a></p>
+            <p class="visit__note">수업 중에는 전화를 받기 어렵습니다. 문자나 카카오톡을 남겨 주시면 순서대로 답변드립니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- contact -->
+  <section class="section section--sunk" id="contact">
+    <div class="shell section__grid">
+      <div class="section__rail">
+        <p class="section__rail-label">Booking</p>
+      </div>
+      <div class="section__body">
+        <div class="section__head">
+          <p class="eyebrow">체형 분석 예약</p>
+          <h2 class="section__title">지금 몸 상태부터 확인해 보세요</h2>
+          <p class="lede">아래에 남겨 주시면 예약 가능한 시간을 안내해 드립니다. 분석과 상담은 약 60분 걸립니다.</p>
+        </div>
+
+        <div class="contact">
+          <form class="form" id="bookingForm" novalidate>
+            <div class="field--row">
+              <div class="field">
+                <label for="f-name">성함</label>
+                <input id="f-name" name="name" type="text" autocomplete="name" required>
+              </div>
+              <div class="field">
+                <label for="f-tel">연락처</label>
+                <input id="f-tel" name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="f-program">관심 있는 처방</label>
+              <select id="f-program" name="program">
+                <option>아직 모르겠어요 — 상담으로 정할게요</option>
+                <option>Rx 01 · 통증 완화</option>
+                <option>Rx 02 · 체형 교정</option>
+                <option>Rx 03 · 기능 강화</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-note">불편한 곳이나 궁금한 점</label>
+              <textarea id="f-note" name="note" placeholder="예) 앉아 있으면 허리가 아프고, 오전에 특히 뻣뻣합니다."></textarea>
+            </div>
+            <button class="btn btn--solid" type="submit">예약 문의 보내기 <span class="btn__arrow" aria-hidden="true">→</span></button>
+            <p class="form__notice" id="formNotice" role="status"></p>
+          </form>
+
+          <aside class="contact__aside">
+            <p class="eyebrow">바로 연결</p>
+            <p class="contact__phone"><a href="tel:0000000000">000-0000-0000</a></p>
+            <p class="contact__note">평일 07:00–22:00 · 토 09:00–15:00</p>
+            <a class="btn btn--line" href="#" id="kakaoLink">카카오톡으로 문의하기</a>
+            <p class="contact__note">카카오톡 채널을 연결하면 상담 내용이 남아 예약 관리가 편합니다.</p>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="shell footer__inner">
+    <div class="footer__brand">
+      <b>모모필라테스</b>
+      <span class="footer__since">Since Sangmu <span>·</span> Momo Pilates</span>
+    </div>
+    <div class="footer__legal">
+      <span>광주광역시 서구 ○○로 00, 0층 · 000-0000-0000</span>
+      <span>사업자등록번호 000-00-00000 · 대표 ○○○</span>
+      <span>© <span class="num">2026</span> 모모필라테스</span>
+    </div>
+  </div>
+</footer>
+
+<nav class="dock" aria-label="빠른 연결">
+  <a href="tel:0000000000">전화</a>
+  <a href="#" id="kakaoDock">카카오톡</a>
+  <a class="dock--primary" href="#contact">체형 분석 예약</a>
+</nav>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>
