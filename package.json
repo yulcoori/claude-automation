@@ -1,0 +1,38 @@
+{
+  "name": "pilates-care",
+  "version": "1.0.0",
+  "private": true,
+  "description": "1:1/2:1 프라이빗 필라테스 센터 회원 사후관리 앱",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "next": "14.2.32",
+    "next-auth": "^4.24.11",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "prisma": "^5.22.0",
+    "sharp": "^0.33.4",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.5.2"
+  }
+}
