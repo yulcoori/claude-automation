@@ -7,6 +7,7 @@ import ProgressBar from "@/components/ProgressBar";
 import PendingApprovals from "@/components/admin/PendingApprovals";
 import MemberTable from "@/components/admin/MemberTable";
 import NoticeBanner from "@/components/NoticeBanner";
+import ResetPasswordButton from "@/components/admin/ResetPasswordButton";
 import { formatPhone } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -178,9 +179,12 @@ async function AdminDashboard({ user }: { user: { id: string; name: string; role
                     <div className="text-sm font-semibold text-stone-800">{i.name} 강사</div>
                     <div className="text-xs text-stone-400">{formatPhone(i.phone)}</div>
                   </div>
-                  <span className="badge bg-brand-50 text-brand-700">
-                    담당 {i._count.instructedMembers}명
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="badge bg-brand-50 text-brand-700">
+                      담당 {i._count.instructedMembers}명
+                    </span>
+                    <ResetPasswordButton userId={i.id} name={i.name} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -190,6 +194,7 @@ async function AdminDashboard({ user }: { user: { id: string; name: string; role
         <MemberTable
           members={members.map((m) => ({
             id: m.id,
+            userId: m.user.id,
             name: m.user.name,
             phone: formatPhone(m.user.phone),
             program: m.program,

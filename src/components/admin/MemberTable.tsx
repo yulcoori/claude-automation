@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ResetPasswordButton from "./ResetPasswordButton";
 
 interface MemberRow {
   id: string;
+  userId: string;
   name: string;
   phone: string;
   program: string | null;
@@ -91,9 +93,12 @@ export default function MemberTable({
                     </select>
                   </td>
                   <td className="py-2.5 text-right">
-                    <Link href={`/members/${m.id}`} className="text-xs font-semibold text-brand-600 hover:underline">
-                      상세 →
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      <ResetPasswordButton userId={m.userId} name={m.name} />
+                      <Link href={`/members/${m.id}`} className="text-xs font-semibold text-brand-600 hover:underline">
+                        상세 →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

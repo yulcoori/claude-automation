@@ -46,6 +46,13 @@ export default async function NavBar({
               </span>
             )}
           </Link>
+          <Link
+            href="/settings"
+            className="font-semibold text-stone-600 hover:text-brand-600"
+            aria-label="내 정보"
+          >
+            ⚙️
+          </Link>
           <span className="hidden text-stone-500 sm:inline">
             {user.name}
             <span className="ml-1 badge bg-brand-50 text-brand-700">
