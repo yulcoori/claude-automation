@@ -40,6 +40,29 @@ export interface PainRow {
   vasNow: string; // VAS 현재
 }
 
+// 체형 그림 마킹 (정면/측면/후면 그림 위 표시)
+export type BodyView = "front" | "side" | "back";
+export type BodyMarkType = "pain" | "tight" | "improved";
+
+export interface BodyMark {
+  view: BodyView;
+  x: number; // 그림 viewBox 좌표 (0~100)
+  y: number; // 그림 viewBox 좌표 (0~220)
+  type: BodyMarkType;
+}
+
+export const BODY_MARK_TYPES: { type: BodyMarkType; label: string; color: string }[] = [
+  { type: "pain", label: "통증", color: "#dc2626" },
+  { type: "tight", label: "긴장·단축", color: "#d97706" },
+  { type: "improved", label: "개선", color: "#059669" },
+];
+
+export const BODY_VIEWS: { view: BodyView; label: string }[] = [
+  { view: "front", label: "정면" },
+  { view: "side", label: "측면" },
+  { view: "back", label: "후면" },
+];
+
 export interface MovementRow {
   group: string;
   name: string;
@@ -59,6 +82,7 @@ export interface ChartContent {
   achievement: string; // 방문 목적도 달성(%)
   pain: PainRow[];
   movement: MovementRow[];
+  bodyMarks: BodyMark[]; // 체형 그림 마킹
   posture: string; // 체형 평가 내용 (정적평가)
   improvements: string; // 개선된 점과 앞으로 중점적으로 들어갈 운동
   planShort: string[];
@@ -89,6 +113,7 @@ export function emptyChartContent(): ChartContent {
       start: "",
       now: "",
     })),
+    bodyMarks: [],
     posture: "",
     improvements: "",
     planShort: Array(PLAN_LINE_COUNT).fill(""),
@@ -107,6 +132,7 @@ export function parseChartContent(json: string): ChartContent {
       pain: Array.isArray(data.pain) && data.pain.length ? data.pain : empty.pain,
       movement:
         Array.isArray(data.movement) && data.movement.length ? data.movement : empty.movement,
+      bodyMarks: Array.isArray(data.bodyMarks) ? data.bodyMarks : [],
       planShort: Array.isArray(data.planShort) ? padLines(data.planShort) : empty.planShort,
       planMid: Array.isArray(data.planMid) ? padLines(data.planMid) : empty.planMid,
       planLong: Array.isArray(data.planLong) ? padLines(data.planLong) : empty.planLong,

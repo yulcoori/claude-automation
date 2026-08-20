@@ -26,6 +26,21 @@ model User {
   charts            Chart[]
   sessionLogs       SessionLog[]
   notices           Notice[]
+  notifications     Notification[]
+}
+
+// 인앱 알림 (새 공지/댓글/게시물/차트)
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // NOTICE | COMMENT | POST | CHART
+  message   String
+  link      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
 }
 
 // 센터 공지 (관리자만 작성, 전체 회원·강사 열람)

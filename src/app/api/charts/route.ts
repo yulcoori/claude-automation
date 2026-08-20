@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { canManageMember, getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { saveUpload } from "@/lib/uploads";
+import { notifyNewChart } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
@@ -43,6 +44,13 @@ export async function POST(req: Request) {
 
     const chart = await prisma.chart.create({
       data: { memberId, instructorId: user.id, milestone, content, pdfPath },
+    });
+    await notifyNewChart({
+      authorId: user.id,
+      authorName: user.name,
+      memberUserId: member.userId,
+      milestone,
+      link: `/members/${member.id}/charts/${chart.id}`,
     });
     return NextResponse.json({ id: chart.id });
   } catch (e) {

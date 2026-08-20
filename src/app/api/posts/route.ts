@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { canManageMember, getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { kindOf, saveUpload } from "@/lib/uploads";
+import { notifyNewPost } from "@/lib/notifications";
 
 export const maxDuration = 300;
 
@@ -73,6 +74,14 @@ export async function POST(req: Request) {
         caption,
         media: { create: mediaData },
       },
+    });
+
+    await notifyNewPost({
+      authorId: user.id,
+      authorName: user.name,
+      memberUserId: member.userId,
+      type,
+      link: `/members/${member.id}`,
     });
 
     return NextResponse.json({ id: post.id });

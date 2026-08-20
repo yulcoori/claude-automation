@@ -9,6 +9,7 @@ import {
   PLAN_GUIDE,
   PLAN_PHASES,
 } from "@/lib/chartTemplate";
+import { BodyMarkEditor } from "@/components/BodyDiagram";
 
 export default function ChartForm({
   memberId,
@@ -304,6 +305,12 @@ export default function ChartForm({
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* 체형 그림 마킹 */}
+      <section className="card">
+        <h2 className="mb-2 font-bold text-stone-900">체형 그림 마킹</h2>
+        <BodyMarkEditor marks={content.bodyMarks} onChange={(marks) => set("bodyMarks", marks)} />
       </section>
 
       {/* 체형 평가 */}

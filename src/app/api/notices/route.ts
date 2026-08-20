@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { kindOf, saveUpload } from "@/lib/uploads";
+import { notifyNewNotice } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
     const notice = await prisma.notice.create({
       data: { authorId: user.id, title, body, pinned, images: { create: images } },
     });
+    await notifyNewNotice(user.id, title);
     return NextResponse.json({ id: notice.id });
   } catch (e) {
     const message = e instanceof Error ? e.message : "저장에 실패했습니다.";

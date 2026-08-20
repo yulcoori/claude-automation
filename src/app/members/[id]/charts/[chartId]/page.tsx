@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import NavBar from "@/components/NavBar";
 import CommentSection from "@/components/CommentSection";
 import { MOVEMENT_ITEMS, PLAN_PHASES, parseChartContent } from "@/lib/chartTemplate";
+import { BodyMarkViewer } from "@/components/BodyDiagram";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -151,6 +152,14 @@ export default async function ChartViewPage({
                 </tbody>
               </table>
             </div>
+          </section>
+        )}
+
+        {/* 체형 그림 마킹 */}
+        {c.bodyMarks.length > 0 && (
+          <section className="card">
+            <h2 className="mb-3 font-bold text-stone-900">체형 그림 마킹</h2>
+            <BodyMarkViewer marks={c.bodyMarks} />
           </section>
         )}
 
