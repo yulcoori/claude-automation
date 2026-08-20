@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import SignOutButton from "./SignOutButton";
+import { LogoIcon } from "./Logo";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "모모필라테스";
 
@@ -22,9 +23,7 @@ export default async function NavBar({
     <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-bold text-stone-900">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-base text-white">
-            🧘
-          </span>
+          <LogoIcon className="h-8 w-8" />
           <span className="text-[15px]">{APP_NAME}</span>
         </Link>
         <div className="flex items-center gap-3 text-sm">

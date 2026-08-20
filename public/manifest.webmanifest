@@ -1,11 +1,11 @@
 {
   "name": "모모필라테스",
   "short_name": "모모필라테스",
-  "description": "1:1 프라이빗 필라테스 회원 케어 - 비포애프터, 월말차트, 강사-회원 소통",
+  "description": "MOMO PILATES · MOVEMENT · PRESCRIPTION - 회원 케어 공간",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fafaf9",
-  "theme_color": "#dc6845",
+  "theme_color": "#d2532a",
   "lang": "ko",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },

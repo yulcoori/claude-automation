@@ -1,4 +1,5 @@
 import LoginForm from "./LoginForm";
+import { LogoBadge } from "@/components/Logo";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "모모필라테스";
 
@@ -9,8 +10,8 @@ export default function LoginPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-10">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-3xl text-white shadow-lg">
-          🧘
+        <div className="mb-5 flex justify-center">
+          <LogoBadge size={128} />
         </div>
         <h1 className="text-2xl font-bold text-stone-900">{APP_NAME}</h1>
         <p className="mt-2 text-sm text-stone-500">
