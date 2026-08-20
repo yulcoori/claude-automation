@@ -7,6 +7,7 @@ import ProgressBar from "@/components/ProgressBar";
 import PostCard from "@/components/PostCard";
 import UploadPanel from "@/components/UploadPanel";
 import SessionLogPanel from "@/components/SessionLogPanel";
+import NoticeBanner from "@/components/NoticeBanner";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +60,8 @@ export default async function MemberPage({ params }: { params: { id: string } })
     <>
       <NavBar user={user} />
       <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6">
+        <NoticeBanner />
+
         {/* 회원 프로필 헤더 */}
         <section className="card">
           <div className="mb-4 flex items-start justify-between">

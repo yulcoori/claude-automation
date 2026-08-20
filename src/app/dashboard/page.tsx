@@ -6,6 +6,7 @@ import NavBar from "@/components/NavBar";
 import ProgressBar from "@/components/ProgressBar";
 import PendingApprovals from "@/components/admin/PendingApprovals";
 import MemberTable from "@/components/admin/MemberTable";
+import NoticeBanner from "@/components/NoticeBanner";
 import { formatPhone } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +63,9 @@ async function InstructorDashboard({
     <>
       <NavBar user={user} />
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
+        <div className="mb-5">
+          <NoticeBanner />
+        </div>
         <h1 className="mb-1 text-xl font-bold text-stone-900">담당 회원</h1>
         <p className="mb-5 text-sm text-stone-500">
           {user.name} 강사님이 담당하는 회원 {members.length}명
@@ -133,9 +137,14 @@ async function AdminDashboard({ user }: { user: { id: string; name: string; role
               회원 {members.length}명 · 강사 {instructors.length}명
             </p>
           </div>
-          <Link href="/admin/register" className="btn-primary">
-            + 회원/강사 등록
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/admin/notices/new" className="btn-secondary">
+              📢 공지 작성
+            </Link>
+            <Link href="/admin/register" className="btn-primary">
+              + 회원/강사 등록
+            </Link>
+          </div>
         </div>
 
         {(pendingUsers.length > 0 || activeUsersWithoutProfile.length > 0) && (

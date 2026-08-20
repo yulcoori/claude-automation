@@ -20,6 +20,12 @@ export default function NavBar({ user }: { user: { name: string; role: string } 
           <span className="text-[15px]">{APP_NAME}</span>
         </Link>
         <div className="flex items-center gap-3 text-sm">
+          <Link
+            href="/notices"
+            className="font-semibold text-stone-600 hover:text-brand-600"
+          >
+            📢 공지
+          </Link>
           <span className="hidden text-stone-500 sm:inline">
             {user.name}
             <span className="ml-1 badge bg-brand-50 text-brand-700">

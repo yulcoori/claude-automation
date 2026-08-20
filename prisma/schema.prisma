@@ -25,6 +25,29 @@ model User {
   comments          Comment[]
   charts            Chart[]
   sessionLogs       SessionLog[]
+  notices           Notice[]
+}
+
+// 센터 공지 (관리자만 작성, 전체 회원·강사 열람)
+model Notice {
+  id        String   @id @default(cuid())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  title     String
+  body      String
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images NoticeImage[]
+}
+
+model NoticeImage {
+  id       String @id @default(cuid())
+  noticeId String
+  notice   Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  filePath String
+  mimeType String
 }
 
 model MemberProfile {
