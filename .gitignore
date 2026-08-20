@@ -1,0 +1,26 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# env
+.env
+.env.local
+.env.production
+
+# database
+prisma/*.db
+prisma/*.db-journal
+
+# uploads (회원 사진/영상/차트 파일)
+/uploads
+
+# misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts

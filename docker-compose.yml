@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      # DB와 업로드 파일을 볼륨(./data)에 저장해서 컨테이너를 재시작해도 유지
+      DATABASE_URL: "file:/data/app.db"
+      UPLOAD_DIR: "/data/uploads"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

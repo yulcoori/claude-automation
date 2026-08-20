@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// role: ADMIN(원장) | INSTRUCTOR(강사) | MEMBER(회원)
+// status: ACTIVE | PENDING(카카오 가입 후 승인 대기)
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String?  @unique
+  passwordHash String?
+  kakaoId      String?  @unique
+  role         String   @default("MEMBER")
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+
+  memberProfile     MemberProfile?
+  instructedMembers MemberProfile[] @relation("InstructorMembers")
+  posts             Post[]
+  comments          Comment[]
+  charts            Chart[]
+  sessionLogs       SessionLog[]
+  notices           Notice[]
+  notifications     Notification[]
+}
+
+// 인앱 알림 (새 공지/댓글/게시물/차트)
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // NOTICE | COMMENT | POST | CHART
+  message   String
+  link      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+// 센터 공지 (관리자만 작성, 전체 회원·강사 열람)
+model Notice {
+  id        String   @id @default(cuid())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  title     String
+  body      String
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images NoticeImage[]
+}
+
+model NoticeImage {
+  id       String @id @default(cuid())
+  noticeId String
+  notice   Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  filePath String
+  mimeType String
+}
+
+model MemberProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instructorId  String?
+  instructor    User?     @relation("InstructorMembers", fields: [instructorId], references: [id])
+  program       String? // 프로그램명 (예: 1:1 리포머)
+  baseSessions  Int       @default(0) // 앱 도입 전 이미 진행한 회차
+  totalSessions Int       @default(30)
+  goal          String? // 회원 운동 목표
+  memo          String?
+  startedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  posts       Post[]
+  charts      Chart[]
+  sessionLogs SessionLog[]
+}
+
+// 수업 진행 기록 (회차 카운트)
+model SessionLog {
+  id           String        @id @default(cuid())
+  memberId     String
+  member       MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  instructorId String?
+  instructor   User?         @relation(fields: [instructorId], references: [id])
+  date         DateTime      @default(now())
+  memo         String?
+}
+
+// type: BEFORE_AFTER(비포애프터) | MEDIA(사진/영상)
+model Post {
+  id            String        @id @default(cuid())
+  memberId      String
+  member        MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  authorId      String
+  author        User          @relation(fields: [authorId], references: [id])
+  type          String
+  sessionNumber Int?
+  caption       String?
+  createdAt     DateTime      @default(now())
+
+  media    Media[]
+  comments Comment[]
+}
+
+// kind: IMAGE | VIDEO | PDF, slot: BEFORE | AFTER | NORMAL
+model Media {
+  id       String @id @default(cuid())
+  postId   String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  kind     String
+  slot     String @default("NORMAL")
+  filePath String
+  mimeType String
+}
+
+// 체형 분석 차트 (월말차트: 10/20/30회차)
+// content: 차트 양식 전체 입력값 JSON
+model Chart {
+  id           String        @id @default(cuid())
+  memberId     String
+  member       MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  instructorId String
+  instructor   User          @relation(fields: [instructorId], references: [id])
+  milestone    Int // 10 | 20 | 30
+  content      String        @default("{}")
+  pdfPath      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // 회원 확인 (읽음 체크 + 피드백)
+  confirmedAt    DateTime?
+  memberFeedback String?
+
+  comments Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String?
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  chartId   String?
+  chart     Chart?   @relation(fields: [chartId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+}
