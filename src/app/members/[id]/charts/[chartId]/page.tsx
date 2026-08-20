@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import NavBar from "@/components/NavBar";
 import CommentSection from "@/components/CommentSection";
 import PaperChart from "@/components/PaperChart";
+import ChartConfirm from "@/components/ChartConfirm";
 import { parseChartContent } from "@/lib/chartTemplate";
 import { formatDate } from "@/lib/format";
 
@@ -84,6 +85,15 @@ export default async function ChartViewPage({
           milestone={chart.milestone}
           content={current}
           timeline={timeline}
+          footer={
+            <ChartConfirm
+              chartId={chart.id}
+              isMember={chart.member.userId === user.id}
+              memberName={chart.member.user.name}
+              confirmedAt={chart.confirmedAt?.toISOString() ?? null}
+              feedback={chart.memberFeedback}
+            />
+          }
         />
 
         {pdfs.length > 0 && (

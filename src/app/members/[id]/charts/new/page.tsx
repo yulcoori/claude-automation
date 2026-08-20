@@ -29,11 +29,23 @@ export default async function NewChartPage({
   const existing = member.charts.find((c) => c.milestone === milestone);
   if (existing) redirect(`/members/${member.id}/charts/${existing.id}/edit`);
 
-  // 이전 차트가 있으면 기본 정보/통증/움직임 평가를 이어받아 시작
-  // (사진/영상 첨부는 각 회차 차트에 따로 올리므로 이어받지 않음 — 회차별 비교 화면에서 함께 보임)
-  const prev = member.charts.find((c) => c.milestone < milestone);
+  // 이전 회차 차트 내용을 그대로 이어받아 시작 (10회차 → 20회차 → 30회차)
+  // 1회 기록·이전 회차 계획은 잠기고, 이번 회차 칸에만 추가로 적습니다.
+  const prev = member.charts.filter((c) => c.milestone < milestone).pop();
   const initial = prev ? parseChartContent(prev.content) : emptyChartContent();
-  initial.movement = initial.movement.map((r) => ({ ...r, startMedia: [], nowMedia: [] }));
+  const carriedOver = Boolean(prev);
+  if (prev) {
+    // 이번 회차에 새로 적을 칸은 비워둠 (1회 기록·이전 계획은 유지)
+    initial.month = "";
+    initial.improvements = "";
+    initial.posture = "";
+    initial.movement = initial.movement.map((r) => ({
+      ...r,
+      now: "",
+      nowMedia: [],
+    }));
+    initial.pain = initial.pain.map((r) => ({ ...r, vasNow: "" }));
+  }
   if (!initial.goal && member.goal) initial.goal = member.goal;
   if (!initial.program && member.program) initial.program = member.program;
 
@@ -46,7 +58,8 @@ export default async function NewChartPage({
         </h1>
         <p className="mb-5 mt-1 text-sm text-stone-500">
           {member.user.name} 회원님
-          {prev && ` · ${prev.milestone}회차 차트 내용을 불러왔습니다. 변경된 부분만 수정하세요.`}
+          {prev &&
+            ` · ${prev.milestone}회차 차트를 그대로 이어받았습니다. 회색 칸은 이전 기록이라 고정되고, 이번 회차 칸만 새로 적으시면 됩니다.`}
         </p>
         <ChartForm
           memberId={member.id}
@@ -54,6 +67,7 @@ export default async function NewChartPage({
           memberName={member.user.name}
           instructorName={user.name}
           initial={initial}
+          carriedOver={carriedOver}
         />
       </main>
     </>

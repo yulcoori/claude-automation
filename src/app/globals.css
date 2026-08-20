@@ -34,11 +34,10 @@ body {
     @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold;
   }
 
-  /* ===== 종이 차트(체형 분석 차트) 레이아웃 ===== */
+  /* ===== 체형 분석 차트 ===== */
   .paper {
-    @apply bg-white text-stone-900;
-    width: 980px;
-    border: 2px solid #57534e;
+    @apply overflow-hidden rounded-2xl border border-stone-300 bg-white text-stone-800 shadow-sm;
+    width: 1000px;
   }
   .paper table {
     @apply w-full;
@@ -47,32 +46,47 @@ body {
   }
   .paper td,
   .paper th {
-    @apply border border-stone-500 px-1.5 py-1 align-middle text-[13px];
+    @apply border border-stone-200 px-2 py-1.5 align-middle text-[13px];
   }
-  /* 항목명 칸 (연한 배경) */
+  /* 항목명 칸 */
   .p-label {
-    @apply bg-brand-50 text-center font-bold;
+    @apply bg-stone-50 text-center text-[12px] font-bold text-stone-600;
   }
+  /* 섹션 머리글 */
   .p-head {
-    @apply bg-sky-50 text-center font-bold;
+    @apply bg-brand-50/70 text-center text-[12px] font-bold uppercase tracking-wide text-brand-800;
   }
   .p-title {
-    @apply border-b-2 border-stone-500 py-3 text-center text-2xl font-bold tracking-tight;
+    @apply bg-gradient-to-b from-white to-stone-50 py-4 text-center;
   }
-  /* 칸 안에서 쓰는 입력 — 테두리 없이 종이에 적는 느낌 */
-  .p-in {
-    @apply w-full bg-transparent px-1 py-0.5 text-[13px] outline-none;
-  }
-  .p-in:focus {
-    @apply rounded bg-brand-50;
+  /* 입력 칸 — 눌러서 쓰는 곳임이 바로 보이도록 */
+  .p-in,
+  .p-ta {
+    @apply w-full rounded-md bg-stone-100/70 px-2 py-1 text-[13px] text-stone-800 outline-none transition;
   }
   .p-ta {
-    @apply w-full resize-none bg-transparent px-1 py-0.5 text-[13px] leading-5 outline-none;
+    @apply resize-none leading-5;
   }
+  .p-in::placeholder,
+  .p-ta::placeholder {
+    @apply text-stone-400;
+  }
+  .p-in:hover,
+  .p-ta:hover {
+    @apply bg-stone-200/60;
+  }
+  .p-in:focus,
   .p-ta:focus {
-    @apply rounded bg-brand-50;
+    @apply bg-white ring-2 ring-brand-400;
   }
-  /* 가로 스크롤 감싸개 */
+  /* 이전 회차에서 이어받아 잠긴 칸 */
+  .p-lock {
+    @apply block rounded-md bg-stone-50 px-2 py-1 text-[13px] text-stone-500;
+  }
+  /* 읽기 전용 표시 */
+  .p-ro {
+    @apply block whitespace-pre-wrap px-2 py-1 text-[13px] text-stone-800;
+  }
   .paper-scroll {
     @apply -mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0;
   }

@@ -13,6 +13,7 @@ export default function ChartForm({
   instructorName,
   initial,
   existingPdf,
+  carriedOver = false,
 }: {
   memberId: string;
   chartId?: string;
@@ -21,6 +22,7 @@ export default function ChartForm({
   instructorName: string;
   initial: ChartContent;
   existingPdf?: string | null;
+  carriedOver?: boolean;
 }) {
   const router = useRouter();
   const [content, setContent] = useState<ChartContent>(initial);
@@ -82,6 +84,7 @@ export default function ChartForm({
         pendingMedia={pendingMedia}
         onAddMedia={addPendingMedia}
         onRemovePendingMedia={removePendingMedia}
+        carriedOver={carriedOver}
       />
 
       {/* 종이/시트 차트 원본 첨부 */}

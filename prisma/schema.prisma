@@ -136,6 +136,10 @@ model Chart {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
+  // 회원 확인 (읽음 체크 + 피드백)
+  confirmedAt    DateTime?
+  memberFeedback String?
+
   comments Comment[]
 }
 
