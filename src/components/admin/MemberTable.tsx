@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import ResetPasswordButton from "./ResetPasswordButton";
+import EditUserDialog, { type EditableUser } from "./EditUserDialog";
 
 interface MemberRow {
   id: string;
@@ -15,6 +15,8 @@ interface MemberRow {
   instructorName: string | null;
   current: number;
   total: number;
+  baseSessions: number;
+  goal: string | null;
   charts: number;
 }
 
@@ -28,6 +30,7 @@ export default function MemberTable({
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [editing, setEditing] = useState<EditableUser | null>(null);
 
   async function assign(memberId: string, instructorId: string) {
     setBusy(memberId);
@@ -57,7 +60,7 @@ export default function MemberTable({
         <p className="py-8 text-center text-sm text-stone-400">등록된 회원이 없습니다.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full min-w-[620px] text-sm">
             <thead>
               <tr className="border-b border-stone-200 text-left text-xs text-stone-400">
                 <th className="py-2 pr-3 font-semibold">이름</th>
@@ -94,8 +97,29 @@ export default function MemberTable({
                   </td>
                   <td className="py-2.5 text-right">
                     <div className="flex items-center justify-end gap-3">
-                      <ResetPasswordButton userId={m.userId} name={m.name} />
-                      <Link href={`/members/${m.id}`} className="text-xs font-semibold text-brand-600 hover:underline">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditing({
+                            userId: m.userId,
+                            name: m.name,
+                            phone: m.phone,
+                            role: "MEMBER",
+                            program: m.program,
+                            instructorId: m.instructorId,
+                            baseSessions: m.baseSessions,
+                            totalSessions: m.total,
+                            goal: m.goal,
+                          })
+                        }
+                        className="text-xs font-semibold text-stone-500 hover:text-brand-600"
+                      >
+                        수정
+                      </button>
+                      <Link
+                        href={`/members/${m.id}`}
+                        className="text-xs font-semibold text-brand-600 hover:underline"
+                      >
                         상세 →
                       </Link>
                     </div>
@@ -105,6 +129,14 @@ export default function MemberTable({
             </tbody>
           </table>
         </div>
+      )}
+
+      {editing && (
+        <EditUserDialog
+          user={editing}
+          instructors={instructors}
+          onClose={() => setEditing(null)}
+        />
       )}
     </section>
   );

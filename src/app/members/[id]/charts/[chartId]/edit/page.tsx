@@ -26,7 +26,7 @@ export default async function EditChartPage({
   return (
     <>
       <NavBar user={user} />
-      <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main className="mx-auto w-full max-w-[1040px] px-4 py-6">
         <h1 className="mb-5 text-xl font-bold text-stone-900">
           차트 수정 · <span className="text-brand-600">{chart.milestone}회차</span>{" "}
           <span className="text-base font-normal text-stone-500">

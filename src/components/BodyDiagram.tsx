@@ -13,6 +13,9 @@ const MARK_COLOR: Record<BodyMarkType, string> = Object.fromEntries(
   BODY_MARK_TYPES.map((t) => [t.type, t.color])
 ) as Record<BodyMarkType, string>;
 
+// 종이 차트에서 쓰는 색상 목록
+export const BODY_MARK_TYPES_PUBLIC = BODY_MARK_TYPES;
+
 const VIEW_W = 100;
 const VIEW_H = 220;
 

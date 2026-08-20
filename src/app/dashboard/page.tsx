@@ -7,7 +7,7 @@ import ProgressBar from "@/components/ProgressBar";
 import PendingApprovals from "@/components/admin/PendingApprovals";
 import MemberTable from "@/components/admin/MemberTable";
 import NoticeBanner from "@/components/NoticeBanner";
-import ResetPasswordButton from "@/components/admin/ResetPasswordButton";
+import InstructorList from "@/components/admin/InstructorList";
 import { formatPhone } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -68,9 +68,8 @@ async function InstructorDashboard({
           <NoticeBanner />
         </div>
         <h1 className="mb-1 text-xl font-bold text-stone-900">담당 회원</h1>
-        <p className="mb-5 text-sm text-stone-500">
-          {user.name} 강사님이 담당하는 회원 {members.length}명
-        </p>
+        {/* 회원 수는 관리자(원장님)만 볼 수 있습니다 */}
+        <p className="mb-5 text-sm text-stone-500">{user.name} 강사님이 담당하는 회원입니다.</p>
         {members.length === 0 ? (
           <div className="card py-12 text-center text-sm text-stone-400">
             아직 담당 회원이 없습니다. 관리자에게 배정을 요청하세요.
@@ -172,31 +171,14 @@ async function AdminDashboard({ user }: { user: { id: string; name: string; role
           }))}
         />
 
-        <section className="card">
-          <h2 className="mb-3 font-bold text-stone-900">강사 현황</h2>
-          {instructors.length === 0 ? (
-            <p className="py-4 text-center text-sm text-stone-400">
-              등록된 강사가 없습니다. 먼저 강사를 등록하세요.
-            </p>
-          ) : (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {instructors.map((i) => (
-                <div key={i.id} className="flex items-center justify-between rounded-xl bg-stone-50 px-4 py-3">
-                  <div>
-                    <div className="text-sm font-semibold text-stone-800">{i.name} 강사</div>
-                    <div className="text-xs text-stone-400">{formatPhone(i.phone)}</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="badge bg-brand-50 text-brand-700">
-                      담당 {i._count.instructedMembers}명
-                    </span>
-                    <ResetPasswordButton userId={i.id} name={i.name} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <InstructorList
+          instructors={instructors.map((i) => ({
+            id: i.id,
+            name: i.name,
+            phone: formatPhone(i.phone),
+            memberCount: i._count.instructedMembers,
+          }))}
+        />
 
         <MemberTable
           members={members.map((m) => ({
@@ -209,6 +191,8 @@ async function AdminDashboard({ user }: { user: { id: string; name: string; role
             instructorName: m.instructor?.name ?? null,
             current: m.baseSessions + m._count.sessionLogs,
             total: m.totalSessions,
+            baseSessions: m.baseSessions,
+            goal: m.goal,
             charts: m._count.charts,
           }))}
           instructors={instructors.map((i) => ({ id: i.id, name: i.name }))}

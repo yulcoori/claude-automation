@@ -40,7 +40,7 @@ export default async function NewChartPage({
   return (
     <>
       <NavBar user={user} />
-      <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main className="mx-auto w-full max-w-[1040px] px-4 py-6">
         <h1 className="text-xl font-bold text-stone-900">
           체형 분석 차트 · <span className="text-brand-600">{milestone}회차</span>
         </h1>
