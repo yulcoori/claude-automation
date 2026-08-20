@@ -40,13 +40,15 @@ export const authOptions: NextAuthOptions = {
         const kakaoId = account.providerAccountId;
         const existing = await prisma.user.findUnique({ where: { kakaoId } });
         if (!existing) {
-          // 카카오 최초 로그인: 승인 대기 상태로 계정 생성 (관리자가 역할/담당강사 지정)
+          // 카카오 최초 로그인: 회원으로 바로 사용 가능
+          // (강사는 전화번호 가입으로 신청 → 원장님 승인)
           await prisma.user.create({
             data: {
               kakaoId,
               name: user.name ?? "카카오 회원",
               role: "MEMBER",
-              status: "PENDING",
+              status: "ACTIVE",
+              memberProfile: { create: { startedAt: new Date() } },
             },
           });
         }

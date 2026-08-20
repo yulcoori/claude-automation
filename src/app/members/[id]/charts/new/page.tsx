@@ -30,8 +30,10 @@ export default async function NewChartPage({
   if (existing) redirect(`/members/${member.id}/charts/${existing.id}/edit`);
 
   // 이전 차트가 있으면 기본 정보/통증/움직임 평가를 이어받아 시작
+  // (사진/영상 첨부는 각 회차 차트에 따로 올리므로 이어받지 않음 — 회차별 비교 화면에서 함께 보임)
   const prev = member.charts.find((c) => c.milestone < milestone);
   const initial = prev ? parseChartContent(prev.content) : emptyChartContent();
+  initial.movement = initial.movement.map((r) => ({ ...r, startMedia: [], nowMedia: [] }));
   if (!initial.goal && member.goal) initial.goal = member.goal;
   if (!initial.program && member.program) initial.program = member.program;
 

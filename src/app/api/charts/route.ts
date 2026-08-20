@@ -3,6 +3,9 @@ import { canManageMember, getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { saveUpload } from "@/lib/uploads";
 import { notifyNewChart } from "@/lib/notifications";
+import { applyMovementMedia } from "@/lib/chartMedia";
+
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
@@ -42,8 +45,11 @@ export async function POST(req: Request) {
       pdfPath = await saveUpload(pdf, memberId);
     }
 
+    // 움직임 평가 사진/영상 첨부 반영
+    const { content: finalContent } = await applyMovementMedia(fd, content, memberId);
+
     const chart = await prisma.chart.create({
-      data: { memberId, instructorId: user.id, milestone, content, pdfPath },
+      data: { memberId, instructorId: user.id, milestone, content: finalContent, pdfPath },
     });
     await notifyNewChart({
       authorId: user.id,

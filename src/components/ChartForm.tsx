@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   type ChartContent,
+  type ChartMediaRef,
   FITNESS_LEVELS,
   MOVEMENT_ITEMS,
   PLAN_GUIDE,
@@ -31,6 +32,8 @@ export default function ChartForm({
   const router = useRouter();
   const [content, setContent] = useState<ChartContent>(initial);
   const [pdf, setPdf] = useState<File | null>(null);
+  // 움직임 평가에 새로 첨부할 사진/영상 (키: "행번호-start" | "행번호-now")
+  const [pendingMedia, setPendingMedia] = useState<Record<string, File[]>>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -52,6 +55,23 @@ export default function ChartForm({
     });
   }
 
+  function addPendingMedia(key: string, files: File[]) {
+    setPendingMedia((p) => ({ ...p, [key]: [...(p[key] ?? []), ...files].slice(0, 4) }));
+  }
+
+  function removePendingMedia(key: string, idx: number) {
+    setPendingMedia((p) => ({ ...p, [key]: (p[key] ?? []).filter((_, k) => k !== idx) }));
+  }
+
+  function removeExistingMedia(i: number, field: "startMedia" | "nowMedia", idx: number) {
+    setContent((c) => ({
+      ...c,
+      movement: c.movement.map((r, j) =>
+        j === i ? { ...r, [field]: r[field].filter((_, k) => k !== idx) } : r
+      ),
+    }));
+  }
+
   function setPlanLine(phase: "planShort" | "planMid" | "planLong", i: number, value: string) {
     setContent((c) => {
       const lines = [...c[phase]];
@@ -70,6 +90,10 @@ export default function ChartForm({
     fd.set("milestone", String(milestone));
     fd.set("content", JSON.stringify(content));
     if (pdf) fd.set("pdf", pdf);
+    // 움직임 평가 첨부 파일
+    for (const [key, files] of Object.entries(pendingMedia)) {
+      for (const f of files) fd.append(`mm-${key}`, f);
+    }
 
     const res = await fetch(chartId ? `/api/charts/${chartId}` : "/api/charts", {
       method: chartId ? "PATCH" : "POST",
@@ -253,57 +277,53 @@ export default function ChartForm({
       {/* 움직임 평가 */}
       <section className="card">
         <h2 className="mb-1 font-bold text-stone-900">움직임 평가 (1회~30회)</h2>
-        <p className="mb-3 text-xs text-stone-400">어떤 기구에서 했는지 체크하고 1회/현재 상태를 기록합니다.</p>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="border-b border-stone-200 text-left text-xs text-stone-400">
-                <th className="w-16 py-2 pr-2 font-semibold">부위</th>
-                <th className="py-2 pr-2 font-semibold">동작</th>
-                <th className="py-2 pr-2 font-semibold">기구</th>
-                <th className="py-2 pr-2 font-semibold">1회</th>
-                <th className="py-2 font-semibold">현재</th>
-              </tr>
-            </thead>
-            <tbody>
-              {content.movement.map((row, i) => {
-                const showGroup = i === 0 || content.movement[i - 1].group !== row.group;
-                const note = MOVEMENT_ITEMS[i]?.note;
-                return (
-                  <tr key={i} className="border-b border-stone-100">
-                    <td className="py-1.5 pr-2 text-xs font-bold text-brand-700">
-                      {showGroup ? row.group : ""}
-                    </td>
-                    <td className="py-1.5 pr-2 text-xs font-semibold text-stone-700">
-                      {row.name}
-                      {note && <span className="ml-1 text-brand-500">{note}</span>}
-                    </td>
-                    <td className="py-1.5 pr-2">
-                      <input
-                        className="input w-24 py-1.5 text-sm"
-                        value={row.equipment}
-                        onChange={(e) => setMovement(i, "equipment", e.target.value)}
-                      />
-                    </td>
-                    <td className="py-1.5 pr-2">
-                      <input
-                        className="input w-28 py-1.5 text-sm"
-                        value={row.start}
-                        onChange={(e) => setMovement(i, "start", e.target.value)}
-                      />
-                    </td>
-                    <td className="py-1.5">
-                      <input
-                        className="input w-28 py-1.5 text-sm"
-                        value={row.now}
-                        onChange={(e) => setMovement(i, "now", e.target.value)}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <p className="mb-3 text-xs text-stone-400">
+          어떤 기구에서 했는지 체크하고 1회/현재 상태를 기록합니다. 각 동작의 사진·영상도 첨부할
+          수 있어요.
+        </p>
+        <div className="space-y-3">
+          {content.movement.map((row, i) => {
+            const note = MOVEMENT_ITEMS[i]?.note;
+            return (
+              <div key={i} className="rounded-xl border border-stone-200 p-3">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="badge bg-brand-50 text-brand-700">{row.group}</span>
+                  <span className="text-sm font-bold text-stone-800">
+                    {row.name}
+                    {note && <span className="ml-1 font-normal text-brand-500">{note}</span>}
+                  </span>
+                  <input
+                    className="input ml-auto w-28 py-1.5 text-sm"
+                    placeholder="기구"
+                    value={row.equipment}
+                    onChange={(e) => setMovement(i, "equipment", e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <MediaCell
+                    label="1회"
+                    value={row.start}
+                    onChange={(v) => setMovement(i, "start", v)}
+                    media={row.startMedia}
+                    pending={pendingMedia[`${i}-start`] ?? []}
+                    onAdd={(files) => addPendingMedia(`${i}-start`, files)}
+                    onRemoveExisting={(idx) => removeExistingMedia(i, "startMedia", idx)}
+                    onRemovePending={(idx) => removePendingMedia(`${i}-start`, idx)}
+                  />
+                  <MediaCell
+                    label="현재"
+                    value={row.now}
+                    onChange={(v) => setMovement(i, "now", v)}
+                    media={row.nowMedia}
+                    pending={pendingMedia[`${i}-now`] ?? []}
+                    onAdd={(files) => addPendingMedia(`${i}-now`, files)}
+                    onRemoveExisting={(idx) => removeExistingMedia(i, "nowMedia", idx)}
+                    onRemovePending={(idx) => removePendingMedia(`${i}-now`, idx)}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -385,8 +405,98 @@ export default function ChartForm({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button type="submit" disabled={loading} className="btn-primary w-full py-3.5">
-        {loading ? "저장 중..." : `${milestone}회차 차트 저장`}
+        {loading ? "저장 중... (영상 첨부 시 시간이 걸릴 수 있어요)" : `${milestone}회차 차트 저장`}
       </button>
     </form>
+  );
+}
+
+// 움직임 평가의 1회/현재 칸: 텍스트 평가 + 사진/영상 첨부
+function MediaCell({
+  label,
+  value,
+  onChange,
+  media,
+  pending,
+  onAdd,
+  onRemoveExisting,
+  onRemovePending,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  media: ChartMediaRef[];
+  pending: File[];
+  onAdd: (files: File[]) => void;
+  onRemoveExisting: (idx: number) => void;
+  onRemovePending: (idx: number) => void;
+}) {
+  const full = media.length + pending.length >= 4;
+  return (
+    <div className="rounded-lg bg-stone-50 p-2">
+      <div className="mb-1 text-xs font-semibold text-stone-500">{label}</div>
+      <input
+        className="input py-1.5 text-sm"
+        placeholder="평가 내용"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        {media.map((m, idx) => (
+          <span key={`e-${idx}`} className="relative inline-block">
+            {m.kind === "VIDEO" ? (
+              <video
+                src={`/api/files/${m.path}`}
+                className="h-14 w-14 rounded-lg bg-stone-900 object-cover"
+                muted
+                preload="metadata"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/files/${m.path}`}
+                alt=""
+                className="h-14 w-14 rounded-lg object-cover"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => onRemoveExisting(idx)}
+              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-stone-700 text-[10px] text-white"
+              aria-label="첨부 삭제"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        {pending.map((f, idx) => (
+          <span
+            key={`p-${idx}`}
+            className="inline-flex max-w-[9rem] items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700"
+          >
+            {f.type.startsWith("video/") ? "🎬" : "🖼"}
+            <span className="truncate">{f.name}</span>
+            <button type="button" onClick={() => onRemovePending(idx)} aria-label="첨부 취소">
+              ✕
+            </button>
+          </span>
+        ))}
+        {!full && (
+          <label className="cursor-pointer rounded-lg border border-dashed border-stone-300 px-2 py-1 text-[11px] font-semibold text-stone-500 hover:border-brand-400 hover:text-brand-600">
+            + 사진/영상
+            <input
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                onAdd(Array.from(e.target.files ?? []));
+                e.target.value = "";
+              }}
+            />
+          </label>
+        )}
+      </div>
+    </div>
   );
 }

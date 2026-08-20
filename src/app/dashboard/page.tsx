@@ -106,6 +106,17 @@ async function InstructorDashboard({
 }
 
 async function AdminDashboard({ user }: { user: { id: string; name: string; role: string } }) {
+  // 회원인데 프로필이 없는 계정 보정 (예전 데이터 호환)
+  const usersWithoutProfile = await prisma.user.findMany({
+    where: { role: "MEMBER", status: "ACTIVE", memberProfile: null },
+    select: { id: true },
+  });
+  if (usersWithoutProfile.length > 0) {
+    await prisma.memberProfile.createMany({
+      data: usersWithoutProfile.map((u) => ({ userId: u.id, startedAt: new Date() })),
+    });
+  }
+
   const [pendingUsers, members, instructors] = await Promise.all([
     prisma.user.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "desc" } }),
     prisma.memberProfile.findMany({
@@ -122,10 +133,6 @@ async function AdminDashboard({ user }: { user: { id: string; name: string; role
       include: { _count: { select: { instructedMembers: true } } },
     }),
   ]);
-
-  const activeUsersWithoutProfile = await prisma.user.findMany({
-    where: { role: "MEMBER", status: "ACTIVE", memberProfile: null },
-  });
 
   return (
     <>
@@ -148,22 +155,22 @@ async function AdminDashboard({ user }: { user: { id: string; name: string; role
           </div>
         </div>
 
-        {(pendingUsers.length > 0 || activeUsersWithoutProfile.length > 0) && (
-          <PendingApprovals
-            pendingUsers={pendingUsers.map((u) => ({
-              id: u.id,
-              name: u.name,
-              createdAt: u.createdAt.toISOString(),
-            }))}
-            orphanUsers={activeUsersWithoutProfile.map((u) => ({ id: u.id, name: u.name }))}
-            instructors={instructors.map((i) => ({ id: i.id, name: i.name }))}
-            linkTargets={members.map((m) => ({
-              id: m.user.id,
-              name: m.user.name,
-              phone: formatPhone(m.user.phone),
-            }))}
-          />
-        )}
+        <PendingApprovals
+          pendingUsers={pendingUsers.map((u) => ({
+            id: u.id,
+            name: u.name,
+            phone: formatPhone(u.phone),
+            role: u.role,
+            viaKakao: Boolean(u.kakaoId),
+            createdAt: u.createdAt.toISOString(),
+          }))}
+          instructors={instructors.map((i) => ({ id: i.id, name: i.name }))}
+          linkTargets={members.map((m) => ({
+            id: m.user.id,
+            name: m.user.name,
+            phone: formatPhone(m.user.phone),
+          }))}
+        />
 
         <section className="card">
           <h2 className="mb-3 font-bold text-stone-900">강사 현황</h2>

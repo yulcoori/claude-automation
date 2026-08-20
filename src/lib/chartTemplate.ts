@@ -63,12 +63,20 @@ export const BODY_VIEWS: { view: BodyView; label: string }[] = [
   { view: "back", label: "후면" },
 ];
 
+// 움직임 평가에 첨부하는 사진/영상
+export interface ChartMediaRef {
+  path: string;
+  kind: "IMAGE" | "VIDEO";
+}
+
 export interface MovementRow {
   group: string;
   name: string;
   equipment: string; // 어떤 기구에서 했는지
   start: string; // 1회 평가
   now: string; // 현재(30회) 평가
+  startMedia: ChartMediaRef[]; // 1회 사진/영상
+  nowMedia: ChartMediaRef[]; // 현재 사진/영상
 }
 
 export interface ChartContent {
@@ -112,6 +120,8 @@ export function emptyChartContent(): ChartContent {
       equipment: "",
       start: "",
       now: "",
+      startMedia: [],
+      nowMedia: [],
     })),
     bodyMarks: [],
     posture: "",
@@ -131,7 +141,17 @@ export function parseChartContent(json: string): ChartContent {
       ...data,
       pain: Array.isArray(data.pain) && data.pain.length ? data.pain : empty.pain,
       movement:
-        Array.isArray(data.movement) && data.movement.length ? data.movement : empty.movement,
+        Array.isArray(data.movement) && data.movement.length
+          ? data.movement.map((r: Partial<MovementRow>) => ({
+              group: r.group ?? "",
+              name: r.name ?? "",
+              equipment: r.equipment ?? "",
+              start: r.start ?? "",
+              now: r.now ?? "",
+              startMedia: Array.isArray(r.startMedia) ? r.startMedia : [],
+              nowMedia: Array.isArray(r.nowMedia) ? r.nowMedia : [],
+            }))
+          : empty.movement,
       bodyMarks: Array.isArray(data.bodyMarks) ? data.bodyMarks : [],
       planShort: Array.isArray(data.planShort) ? padLines(data.planShort) : empty.planShort,
       planMid: Array.isArray(data.planMid) ? padLines(data.planMid) : empty.planMid,

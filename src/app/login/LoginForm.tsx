@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -75,9 +76,12 @@ export default function LoginForm({ kakaoEnabled }: { kakaoEnabled: boolean }) {
         </button>
       </form>
       <p className="text-center text-xs leading-5 text-stone-400">
-        계정은 센터에서 등록해 드립니다.
+        처음이신가요?{" "}
+        <Link href="/signup" className="font-semibold text-brand-600 hover:underline">
+          회원가입
+        </Link>
         <br />
-        전화번호/비밀번호는 담당 강사님 또는 센터에 문의해 주세요.
+        비밀번호를 잊으셨다면 센터에 문의해 주세요.
       </p>
     </div>
   );

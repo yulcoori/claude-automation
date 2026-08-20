@@ -4,20 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTime } from "@/lib/format";
 
-interface PendingUser {
+export interface PendingUser {
   id: string;
   name: string;
+  phone: string;
+  role: string; // 본인이 가입할 때 선택한 구분
+  viaKakao: boolean;
   createdAt: string;
 }
 
 export default function PendingApprovals({
   pendingUsers,
-  orphanUsers,
   instructors,
   linkTargets,
 }: {
   pendingUsers: PendingUser[];
-  orphanUsers: { id: string; name: string }[]; // 승인됐지만 회원 프로필이 없는 계정
   instructors: { id: string; name: string }[];
   linkTargets: { id: string; name: string; phone: string }[];
 }) {
@@ -42,20 +43,17 @@ export default function PendingApprovals({
     }
   }
 
-  const allPending = [
-    ...pendingUsers.map((u) => ({ ...u, pending: true })),
-    ...orphanUsers.map((u) => ({ ...u, createdAt: "", pending: false })),
-  ];
+  if (pendingUsers.length === 0) return null;
 
   return (
     <section className="card border-amber-200 bg-amber-50/50">
-      <h2 className="mb-1 font-bold text-stone-900">🔔 승인 대기</h2>
+      <h2 className="mb-1 font-bold text-stone-900">🔔 승인 대기 ({pendingUsers.length})</h2>
       <p className="mb-3 text-xs text-stone-500">
-        카카오로 가입한 계정입니다. 어떤 회원/강사인지 확인 후 역할을 지정해 주세요.
+        본인이 직접 가입한 계정입니다. 맞는 분인지 확인 후 승인해 주세요.
       </p>
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       <div className="space-y-2">
-        {allPending.map((u) => (
+        {pendingUsers.map((u) => (
           <PendingRow
             key={u.id}
             user={u}
@@ -77,24 +75,35 @@ function PendingRow({
   busy,
   onAct,
 }: {
-  user: { id: string; name: string; createdAt: string; pending: boolean };
+  user: PendingUser;
   instructors: { id: string; name: string }[];
   linkTargets: { id: string; name: string; phone: string }[];
   busy: boolean;
   onAct: (body: Record<string, unknown>) => void;
 }) {
-  const [mode, setMode] = useState<"member" | "instructor" | "link">("member");
+  const wantsInstructor = user.role === "INSTRUCTOR";
+  const [role, setRole] = useState<"MEMBER" | "INSTRUCTOR">(
+    wantsInstructor ? "INSTRUCTOR" : "MEMBER"
+  );
   const [instructorId, setInstructorId] = useState("");
   const [linkTargetId, setLinkTargetId] = useState("");
+  const [linking, setLinking] = useState(false);
 
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="font-semibold text-stone-800">{user.name}</span>
-          {user.createdAt && (
-            <span className="ml-2 text-xs text-stone-400">{formatDateTime(user.createdAt)} 가입</span>
-          )}
+          <span className="badge bg-stone-100 text-stone-500">{user.phone}</span>
+          <span
+            className={`badge ${
+              wantsInstructor ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-700"
+            }`}
+          >
+            {wantsInstructor ? "강사로 신청" : "회원으로 신청"}
+          </span>
+          {user.viaKakao && <span className="badge bg-[#FEE500] text-[#191919]">카카오</span>}
+          <span className="text-xs text-stone-400">{formatDateTime(user.createdAt)}</span>
         </div>
         <button
           type="button"
@@ -107,31 +116,9 @@ function PendingRow({
           삭제
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          className="input w-auto py-1.5 text-xs"
-          value={mode}
-          onChange={(e) => setMode(e.target.value as typeof mode)}
-        >
-          <option value="member">신규 회원으로 승인</option>
-          <option value="instructor">강사로 승인</option>
-          {linkTargets.length > 0 && <option value="link">기존 회원 계정과 연결</option>}
-        </select>
-        {mode === "member" && (
-          <select
-            className="input w-auto py-1.5 text-xs"
-            value={instructorId}
-            onChange={(e) => setInstructorId(e.target.value)}
-          >
-            <option value="">담당 강사 선택(선택사항)</option>
-            {instructors.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.name} 강사
-              </option>
-            ))}
-          </select>
-        )}
-        {mode === "link" && (
+
+      {linking ? (
+        <div className="flex flex-wrap items-center gap-2">
           <select
             className="input w-auto py-1.5 text-xs"
             value={linkTargetId}
@@ -144,20 +131,71 @@ function PendingRow({
               </option>
             ))}
           </select>
-        )}
-        <button
-          type="button"
-          className="btn-primary px-3 py-1.5 text-xs"
-          disabled={busy || (mode === "link" && !linkTargetId)}
-          onClick={() => {
-            if (mode === "link") onAct({ action: "link", targetUserId: linkTargetId });
-            else if (mode === "instructor") onAct({ action: "activate", role: "INSTRUCTOR" });
-            else onAct({ action: "activate", role: "MEMBER", instructorId: instructorId || null });
-          }}
-        >
-          {busy ? "처리 중..." : "확인"}
-        </button>
-      </div>
+          <button
+            type="button"
+            className="btn-primary px-3 py-1.5 text-xs"
+            disabled={busy || !linkTargetId}
+            onClick={() => onAct({ action: "link", targetUserId: linkTargetId })}
+          >
+            연결
+          </button>
+          <button
+            type="button"
+            className="text-xs text-stone-400"
+            onClick={() => setLinking(false)}
+          >
+            취소
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="input w-auto py-1.5 text-xs"
+            value={role}
+            onChange={(e) => setRole(e.target.value as typeof role)}
+          >
+            <option value="MEMBER">회원으로 승인</option>
+            <option value="INSTRUCTOR">강사로 승인</option>
+          </select>
+          {role === "MEMBER" && (
+            <select
+              className="input w-auto py-1.5 text-xs"
+              value={instructorId}
+              onChange={(e) => setInstructorId(e.target.value)}
+            >
+              <option value="">담당 강사 선택(선택사항)</option>
+              {instructors.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name} 강사
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            className="btn-primary px-4 py-1.5 text-xs"
+            disabled={busy}
+            onClick={() =>
+              onAct({
+                action: "activate",
+                role,
+                instructorId: role === "MEMBER" ? instructorId || null : null,
+              })
+            }
+          >
+            {busy ? "처리 중..." : "✓ 승인"}
+          </button>
+          {user.viaKakao && linkTargets.length > 0 && (
+            <button
+              type="button"
+              className="text-xs text-stone-400 hover:text-brand-600"
+              onClick={() => setLinking(true)}
+            >
+              기존 계정과 연결
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
